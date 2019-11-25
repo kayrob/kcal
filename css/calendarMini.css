@@ -1,0 +1,85 @@
+/* 
+    Document   : calendarMini
+    Created on : 27-Nov-2013, 6:35:03 PM
+    Author     : karenlaansoo
+    Description:
+        Style the mini calendar. In a separate file so only called if widget is used
+*/
+#pQVdateTime{
+    display:none;
+}
+#calendarWidgetTable td{
+    text-align: center;
+    padding: 6px 3px;
+}
+#calendarWidgetTable .tdCalSpacer{
+    color: #ccc;
+}
+#calendarWidgetTable .calToday{
+    background-color: #220e10;
+    color: #ccc;
+}
+#calendarWidgetTable .tdQvEvents{
+    cursor: pointer;
+    color: #e6402a;
+}
+.event-mini-widget h4{
+    margin: 5px 0;
+    text-align: center;
+}
+.event-mini-widget h4 span{
+    display:inline-block;
+}
+.event-mini-widget h4 span:nth-child(odd){
+    width: 20px;
+    text-align:center;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 0 17px 3px 11px;
+    cursor:pointer;
+}
+.event-mini-widget h4 span:nth-child(odd):hover{
+    color: #e6402a;
+}
+.event-mini-widget h4 span:nth-child(even){
+    margin-left: 10px;
+    margin-right: 10px;
+}
+#dlgQuickView{
+    z-index: 1;
+    height: auto;
+    width: 300px;
+    margin: 0;
+    position: absolute;
+    box-shadow: 1px #f0f0f0;
+    background-color: #fff;
+    display:none;
+}
+#dlgQuickView .close-btn{
+    font-size:28px;
+    text-decoration:none;
+    position:absolute;
+    top: -10px;
+    right: -8px;
+    height:30px;
+    width:30px;
+    border-radius: 20px;
+    background-color: #333333;
+    text-align: center;
+    color: #ffffff;
+    line-height: 1.1;
+}
+#dlgQuickView dl{
+    margin: 0;
+    padding: 5px;
+}
+#dlgQuickView dt{
+    margin-top: 10px;
+    margin-left: 10px;
+}
+#dlgQuickView dd {
+    margin-left: 10px;
+}
+#dlgQuickView dl:nth-child(even){
+    background-color: #f2f2f2;
+}
