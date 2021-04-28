@@ -16,5 +16,7 @@ A calendar plugin that uses fullcalendar as a base. Can used with pre-built widg
 1. Recurring events
 2. Standard Single type template can be used
 3. Standard taxonomy type template can be ui-state-default
+4. Import events from rss (bulk)  or ics file
+5. Export to .ICS
 
 There two companion plugins: Scheduler and course registration
