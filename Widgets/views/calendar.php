@@ -4,16 +4,26 @@ $eventDetails = "";
 
 if (isset($_GET['event']) && preg_match("/^([0-9]{1,6})(_)?([0-9]{1,6})?$/",$_GET["event"],$matches)){
     $eventDetails = $cal->get_event_details_byID($_GET);
-    $eventDetails["date"] = date("F, j Y g:i a", strtotime($eventDetails["start"])) ." - ";
-    $eventDetails["date"] .= (date("Y-m-d", strtotime($eventDetails["start"])) == date("Y-m-d", strtotime($eventDetails["end"]))) ? date("g:i a", strtotime($eventDetails["end"])) : date("F, j Y g:i a", strtotime($eventDetails["end"]));
-    
+    $date = new DateTime('', new DateTimeZone(get_option('gmt_offset')));
+    $date->setTimestamp($eventDetails["start"]);
+
+    if (date("Y-m-d", strtotime($eventDetails["start"])) == date("Y-m-d", strtotime($eventDetails["end"]))) {
+        $eventDetails["date"] = $date->format('F, j Y g:i a') ." - ";
+        $date->setTimestamp($eventDetails["end"]);
+        $eventDetails["date"] .= $date->format('g:i a');
+    } else {
+        $eventDetails["date"] = $date->format('F, j Y') ." - ";
+        $date->setTimestamp($eventDetails["end"]);
+        $eventDetails["date"] .= $date->format('F, j Y');
+    }
+
 }
 
 $months = array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
 
 ?>
 <div id="calendarWrap">
-	
+
 	<div id="centreCol">
 		<div id='calendarTitle'><h2 class="fc-header-title"></h2></div>
 		<!--calendar div should remain empty for fullCalendar.js to fill-->
@@ -33,7 +43,7 @@ $months = array("January", "February", "March", "April", "May", "June", "July", 
 
             </div>
 	</div>
-<div class="clearfix"></div> 
+<div class="clearfix"></div>
 </div>
 <div class="quickview-popup" id="dlgEventDetails">
 <div class="animated fadeInUp"><a class="close-btn" href="#"><i class="ss-icon">&#x2421;</i></a>

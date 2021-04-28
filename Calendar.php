@@ -161,16 +161,7 @@ DLGTBL;
         }
         echo $css;
     }
-    /**
-    * Create a timestamp for initial event start and initial event end date for generating start and stop dates for child (recurring) events and widgets
-    * @access protected
-    * @param string $dateTime
-    * @return string|false
-    */
-    protected function create_timestamp($dateTime){
-        $dateTime = strtotime($dateTime);
-        return $dateTime;
-    }
+
     /**
     * Create an array of events based on results retrieved from database to be returned to calendar as json encoded
     * This is used for main (parent) events and recurring (child) events
@@ -180,13 +171,14 @@ DLGTBL;
     * @param true|false $recurring
     * @return array
     */
-    public function set_event_data($res,$calID,$recurring = false){
+    public function set_event_data($res, $calID, $recurring = false){
         $events = array();
         if ($res !== false){
 
             foreach($res as $row){
                 $itemID = explode("-", $row->ID);
                 $meta = get_post_meta($itemID[0]);
+                $this->timezone = (isset($meta['_kcal_timezone'])) ? $meta['_kcal_timezone'][0] : get_option('gmt_offset');
 
                 $location = trim($meta["_kcal_location"][0]);
                 foreach($meta as $key => $data){
@@ -209,14 +201,36 @@ DLGTBL;
                     $permalink .= "?r=" .$itemID[1];
                 }
 
+                try {
+                    $timezoneObj = new DateTimeZone($this->timezone);
+                } catch (exception $e) {
+                    $timezoneObj = new DateTimeZone(get_option('gmt_offset'));
+                }
+
+                $dateS = new DateTime('', new DateTimeZone($timezoneObj));
+                $dateE = new DateTime('', new DateTimeZone($timezoneObj));
+
+
+
+                if ($recurring === true) {
+                    $dateS->setTimestamp($row->eventStartDate);
+                    $dateE->setTimestamp($row->eventEndDate);
+                } else {
+                    $dateS->setTimestamp($meta["_kcal_eventStartDate"][0]);
+                    if ($meta["_kcal_eventEndDate"][0] <= $meta["_kcal_eventStartDate"][0]) {
+                        $dateE->setTimestamp($dateS->getTimestamp() + 3600);
+                    } else {
+                        $dateE->setTimestamp($meta["_kcal_eventEndDate"][0]);
+                    }
+                }
+
                 $eventsArray['id'] = $eventID;
                 $eventsArray['title'] = preg_replace('%[^A-Za-z0-9\s\_\'\"\?\-\:\&\(\)]*%',"", trim($row->post_title));
                 $eventsArray['allDay'] = (isset($meta["_kcal_allDay"][0])) ? (bool)$meta["_kcal_allDay"][0] : false;
-                $eventsArray['start'] = ($recurring === true) ? date("Y-m-d H:i:s", $row->eventStartDate) : date("Y-m-d H:i:s", $meta["_kcal_eventStartDate"][0]);
-                $eventsArray['end'] = ($meta["_kcal_eventEndDate"][0] <= $meta["_kcal_eventStartDate"][0]) ? date("Y-m-d H:i:s", ($meta["_kcal_eventStartDate"][0] + (60*60))) : date("Y-m-d H:i:s", ($meta["_kcal_eventEndDate"][0]));
-                if ($recurring === true){
-                    $eventsArray["end"] = date("Y-m-d H:i:s", $row->eventEndDate);
-                }
+
+                $eventsArray['start'] = $dateS->format('Y-m-d H:i:s');
+                $eventsArray['end'] = $dateE->format('Y-m-d H:i:s');
+
                 $eventsArray['className'] = ($eventsArray['allDay'] === false) ? "cal_$calID" : "allDay_$calID";
                 $eventsArray['description'] = strip_tags($row->post_content);
                 $eventsArray['location'] = $location;

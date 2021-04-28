@@ -1,10 +1,11 @@
 <?php
 /*
 Plugin Name: K-Cal
+Plugin URI: https://example.com/plugins/the-basics/
 Description: Full service calendar using fullCalendar as base
-Version: 2.2.6
+Version: 2.3
 Author: Karen Laansoo
-Author URI: http://ecreative.ca
+Author URI: https://karenlaansoo.me
 */
 
 require_once(__DIR__ ."/Calendar.php");
@@ -81,14 +82,15 @@ if (!class_exists("kCal")){
                 'hierarchical'  => true,
                 'rewrite'       => array(
                     'slug'          => 'calendar',
-                    'with_front'    => true,
+                    'with_front'    => false,
                 ),
                 'capabilities'  => array(
                     'manage_terms'  => 'edit_events',
                     'edit_terms'    => 'edit_events',
                     'delete_terms'  => 'delete_events',
                     'assign_terms'  => 'edit_events'
-                )
+                ),
+                'show_in_rest' => true
 
             );
             register_taxonomy("calendar", "event", $taxonomy);
@@ -109,35 +111,50 @@ if (!class_exists("kCal")){
 
             );
 
-            $supports = array("title", "editor", "thumbnail");
+            $supports = array("title", "editor", "thumbnail", "excerpt");
 
             $rewrite = array(
                 "slug"          => "events",
-                "with_front"    => true,
+                "with_front"    => false,
                 "pages"         => true
             );
             register_post_type( "event",
                 array('labels'          => $labels,
-                  'description'         => "kCal Manager",
+                  'description'         => "Calendar Manager",
                   'public'              => true,
                   'has_archive'         => true,
                   'show_ui'             => true,
                   'show_in_menu'        => true,
                   'show_in_admin_bar'   => true,
                   'menu_position'       => 20,
-                  'menu_icon'           => plugin_dir_url(__FILE__) ."img/calendar.png",
+                  'menu_icon'           => 'dashicons-calendar',
                   'capability_type'     => array("post", "posts", "event", "events"),
                   'map_meta_cap'        => true,
                   'hierarchical'        => false,
                   'supports'            => $supports,
                   'taxonomies'          => array("calendar"),
-                  'rewrite'             => $rewrite
+                  'rewrite'             => $rewrite,
+                  'show_admin_column'   => true
                 )
             );
 
             $adminRole = get_role("administrator");
             $adminRole->add_cap("edit_events");
             $adminRole->add_cap("delete_events");
+
+            if( is_active_widget( 'kCalQuickView' ) ) { // check if search widget is used
+                wp_enqueue_script('kcalendar-mini');
+                wp_enqueue_style('kcalendar-mini');
+            }
+
+			$editorRole = get_role("editor");
+			$editorRole->add_cap("edit_events");
+            $editorRole->add_cap("delete_events");
+
+			$authorRole = get_role("author");
+			$authorRole->add_cap("edit_events");
+            $authorRole->add_cap("delete_events");
+
         }
         /**
         * Flush re-write rules when plugin is activated.
@@ -151,17 +168,25 @@ if (!class_exists("kCal")){
         * @access public
         */
         public function on_deactivate(){
-           flush_rewrite_rules();
-           $adminRole = get_role("administrator");
-           $adminRole->remove_cap("edit_events");
-           $adminRole->remove_cap("delete_events");
+			flush_rewrite_rules();
+			$adminRole = get_role("administrator");
+			$adminRole->remove_cap("edit_events");
+			$adminRole->remove_cap("delete_events");
+
+			$editorRole = get_role("editor");
+			$editorRole->remove_cap("edit_events");
+			$editorRole->remove_cap("delete_events");
+
+			$authorRole = get_role("author");
+			$authorRole->remove_cap("edit_events");
+			$authorRole->remove_cap("delete_events");
         }
         protected function get_eventColumn_calendar($post_id){
             $calendars = wp_get_post_terms($post_id, "calendar");
             $postcals = "";
             if (!empty($calendars)){
                 foreach($calendars as $term){
-                    $calURL = "edit-tags.php?action=edit&taxonomy=calendar&tag_ID=".$term->term_id."8&post_type=event";
+                    $calURL = "term.php?taxonomy=calendar&tag_ID=".$term->term_id."&post_type=event";
                     if (!empty($postcals)){
                         $postcals .= ", ";
                     }
@@ -243,6 +268,7 @@ if (!class_exists("kCal")){
             wp_enqueue_style('thickbox');
             wp_enqueue_script('thickbox');
             wp_localize_script("adminCalendar", "kcal_object", array("edit_url" => admin_url("post.php?action=edit")));
+
         }
         /**
         * Admin subpage to display the fullcalendar view
@@ -269,7 +295,7 @@ if (!class_exists("kCal")){
               $imported = $ca->import_parse_ICS($ics["file"], $calendar);
             }
             else{
-              $imported["error"][] = "ICS file could not be uploaded.";
+              $imported["error"][] = __("ICS file could not be uploaded.", 'kcal');
             }
           }
           include_once(__DIR__ ."/Apps/views/import.php");
@@ -287,7 +313,7 @@ if (!class_exists("kCal")){
             if (class_exists("kCalListView")){
                 register_widget("kCalListView");
             }
-            if (class_exists("kCal_mini_widget")){
+            if (class_exists("kCalQuickView")){
                 register_widget("kCalQuickView");
             }
             if (class_exists("kCalfilterEventsDate")){
@@ -296,6 +322,7 @@ if (!class_exists("kCal")){
             if (class_exists("kCalCalendarSidebar")){
                 register_widget("kCalCalendarSidebar");
             }
+
             register_sidebar(array(
                     'name'          => esc_html__( 'Events Archive Sidebar', 'kCal' ),
                     'id'            => "sidebar-kcal-events",
@@ -339,24 +366,24 @@ if (!class_exists("kCal")){
             $richText = stripslashes(get_option("calendar_description_".$term_id, ""));
         ?>
             <tr class="form-field">
-            <th scope="row" valign="top"><label for="cal_colour"><?php _e("Select Calendar Colour"); ?></label></th>
+            <th scope="row" valign="top"><label for="cal_colour"><?php _e("Select Calendar Colour", 'kcal'); ?></label></th>
             <td>
                 <input type="text" id="cal_colour" name="cal_colour" size="10" value="<?php echo $cat_meta_colour;?>" class="color" style="width: 100px"/>
     		<div id="colorPickerNew"></div>
             </td>
             </tr>
             <tr class="form-field">
-            <th scope="row" valign="top"><label for="_kcal_text_colour"><?php _e("Text Colour for Calendar."); ?></label></th>
+            <th scope="row" valign="top"><label for="_kcal_text_colour"><?php _e("Text Colour for Calendar.", 'kcal'); ?></label></th>
             <td>
                 <select name='_kcal_text_colour' id='_kcal_text_colour'>
-                    <option value='#000'<?php if ('#fff' != $cat_meta_textcolour ){ echo ' selected="selected"';}?>>Black<?php if ('#fff' != $cat_meta_textcolour ){ echo '*';}?></option>
-                    <option value='#fff'<?php if ('#fff' == $cat_meta_textcolour ){ echo ' selected="selected"';}?>>White<?php if ('#fff' == $cat_meta_textcolour ){ echo '*';}?></option>
+                    <option value='#000'<?php if ('#fff' != $cat_meta_textcolour ){ echo ' selected="selected"';}?>><?php _e('Black', 'kcal');?><?php if ('#fff' != $cat_meta_textcolour ){ echo '*';}?></option>
+                    <option value='#fff'<?php if ('#fff' == $cat_meta_textcolour ){ echo ' selected="selected"';}?>><?php _e('White', 'kcal');?><?php if ('#fff' == $cat_meta_textcolour ){ echo '*';}?></option>
                 </select>
-                <p><i>The correct colour to pick is the text shown in the colour selected above.</i></p>
+                <p><i><?php _e('The correct colour to pick is the text shown in the colour selected above.', 'kcal');?></i></p>
             </td>
             </tr>
             <tr class="form-field">
-            <th scope="row" valign="top"><label for="_kcal_calendarDescription"><?php _e("Rich Text Description"); ?></label></th>
+            <th scope="row" valign="top"><label for="_kcal_calendarDescription"><?php _e("Rich Text Description", 'kcal'); ?></label></th>
             <td>
                 <?php wp_editor($richText, "_kcal_calendarDescription", $wp_editor_settings); ?>
             </td>
@@ -390,24 +417,38 @@ if (!class_exists("kCal")){
         }
         public function kCal_mb_nonce(){}
         public function kCal_add_meta_boxes(){
-            add_meta_box("kcal_eventDate", __("Event Date"), array($this, "kcal_mb_eventDate"), "event", "advanced");
-            add_meta_box("kcal_eventLocation", __("Event Location"), array($this, "kcal_mb_eventLocation"), "event", "advanced");
-            add_meta_box("kcal_eventRepeat", __("Event Repeat"), array($this, "kcal_mb_eventRepeat"), "event", "advanced");
-            add_meta_box("kcal_eventURL", __("Event URL"), array($this, "kcal_mb_eventURL"), "event", "advanced");
+            add_meta_box("kcal_eventDate", __("Event Date", 'kcal'), array($this, "kcal_mb_eventDate"), "event", "advanced");
+            add_meta_box("kcal_eventLocation", __("Event Location", 'kcal'), array($this, "kcal_mb_eventLocation"), "event", "advanced");
+            add_meta_box("kcal_eventRepeat", __("Event Repeat", 'kcal'), array($this, "kcal_mb_eventRepeat"), "event", "advanced");
+            add_meta_box("kcal_eventURL", __("Registration URL", 'kcal'), array($this, "kcal_mb_eventURL"), "event", "advanced");
         }
         public function kcal_mb_eventDate($post){
             $meta = get_post_meta($post->ID);
-            $allDay = get_post_meta($post->ID, "_kcal_allDay", true);
-            $allDayChecked = ((bool)$allDay === true) ? " checked=\"checked\"" : "";
 
-            $timezone = get_option('gmt_offset');
+            $allDay = get_post_meta($post->ID, "_kcal_allDay", true);
+            $allDayChecked = (!empty($allDay) && (bool)$allDay == true) ? " checked=\"checked\"" : "";
+
+            $timezone = get_post_meta($post->ID, "_kcal_timezone", true);
+            if (empty($timezone) || false == $timezone) {
+                $timezone = get_option('gmt_offset');
+            }
             $startDate = get_post_meta($post->ID, "_kcal_eventStartDate", true);
             $endDate = get_post_meta($post->ID, "_kcal_eventEndDate", true);
 
-            $date = new DateTime('', new DateTimeZone($timezone));
-            $date->setTimestamp($startDate);
-            $date2 = new DateTime('', new DateTimeZone($timezone));
-            $date2->setTimestamp($endDate);
+            try {
+                $dateTimezone = new DateTimeZone($timezone);
+            } catch (exception $e) {
+                $dateTimezone = new DateTimeZone(get_option('gmt_offset'));
+            }
+
+            $date = new DateTime('', $dateTimezone);
+            if (!empty($startDate)) {
+                $date->setTimestamp($startDate);
+            }
+            $date2 = new DateTime('', $dateTimezone);
+            if (!empty($endDate)) {
+                $date2->setTimestamp($endDate);
+            }
 
             $startDisplay = (!empty($startDate) && (bool) $startDate !== false) ? $date->format("Y-m-d") : "";
             $startTime = (!empty($startDate) && (bool) $startDate !== false) ? $date->format("g:i A") : "";
@@ -415,30 +456,32 @@ if (!class_exists("kCal")){
             $endTime = (!empty($endDate) && (bool) $endDate !== false) ? $date2->format("g:i A") : "";
 
             wp_nonce_field("kcal_meta_box", "kCal_mb_nonce");
-            echo "<p><label for=\"_kcal_allDay\">All Day Event</label>";
+            echo "<p><label for=\"_kcal_allDay\">".__('All Day Event', 'kcal')."</label>";
             echo "&nbsp;&nbsp;<input type=\"checkbox\" name=\"_kcal_allDay\" id=\"_kcal_allDay\" value=\"1\" {$allDayChecked}/></p>";
-            echo "<p><label for=\"_kcal_eventStartDate\">Start Date</label><br />";
+            echo "<p><label for=\"_kcal_eventStartDate\">".__('Start Date', 'kcal')."</label><br />";
             echo "<input type=\"text\" name=\"_kcal_eventStartDate\" id=\"_kcal_eventStartDate\" class=\"datepicker\" value=\"".$startDisplay."\" style=\"width: 100%;max-width: 400px\"/></p>";
-            echo "<p><label for=\"_kcal_eventStartTime\">Start Time</label><br />";
+            echo "<p><label for=\"_kcal_eventStartTime\">".__('Start Time', 'kcal')."</label><br />";
             echo "<input type=\"text\" name=\"_kcal_eventStartTime\" id=\"_kcal_eventStartTime\" class=\"timepicker\" value=\"".$startTime."\" style=\"width: 100%;max-width: 400px\"/></p>";
-            echo "<p><label for=\"_kcal_eventEndDate\">End Date</label><br />";
+            echo "<p><label for=\"_kcal_eventEndDate\">".__('End Date', 'kcal')."</label><br />";
             echo "<input type=\"text\" name=\"_kcal_eventEndDate\" id=\"_kcal_eventEndDate\" class=\"datepicker\" value=\"".$endDisplay."\" style=\"width: 100%;max-width: 400px\"/></p>";
-            echo "<p><label for=\"_kcal_eventEndTime\">End Time</label><br />";
+            echo "<p><label for=\"_kcal_eventEndTime\">".__('End Time', 'kcal')."</label><br />";
             echo "<input type=\"text\" name=\"_kcal_eventEndTime\" id=\"_kcal_eventEndTime\" class=\"timepicker\" value=\"".$endTime."\" style=\"width: 100%;max-width: 400px\"/></p>";
+            echo "<p><label for=\"_kcal_timezone\">".__('Timezone', 'kcal')."</label><br />";
+            echo "<select name=\"_kcal_timezone\" id=\"_kcal_timezone\">". wp_timezone_choice( $timezone ) ."</select></p>";
 
         }
         public function kcal_mb_eventLocation($post){
             $location = get_post_meta($post->ID, "_kcal_location", true);
             $map = get_post_meta($post->ID, "_kcal_locationMap", true);
-            echo "<p><label for=\"_kcal_location\">Location Details</label><br />";
+            echo "<p><label for=\"_kcal_location\">".__('Location Details', 'kcal')."</label><br />";
             echo "<input name=\"_kcal_location\" id=\"_kcal_location\" value=\"".$location."\" style=\"width: 100%;max-width: 400px\"></p>";
-            echo "<p><label for=\"_kcal_locationMap\">Map Image</label><br />";
+            /*echo "<p><label for=\"_kcal_locationMap\">".__('Map Image', 'kcal')."</label><br />";
             echo "<input type=\"text\" name=\"_kcal_locationMap\" id=\"_kcal_locationMap\" value=\"".$map."\" style=\"width: 80%\"/>";
             echo "<input type=\"button\" class=\"button-primary\" value=\"Upload Image\" id=\"uploadimage_kcal_locationMap\" /><br />";
             if (!empty($map)){
                 echo "<img src=\"".  $map."\" alt=\"\" style=\"height:auto;width: 100px\" id=\"img_kcal_locationMap\"/><br />";
             }
-            echo "</p>";
+            echo "</p>";*/
         }
         public function kcal_mb_eventRepeat($post){
             $recurrenceType = get_post_meta($post->ID, "_kcal_recurrenceType", true);

@@ -32,7 +32,7 @@ $location = $meta["_kcal_location"][0];
                 <div class="entry-title-border"></div>
             </h2>
     </header>
-    <div class="event-content">    
+    <div class="event-content">
     <strong>Date:</strong><span><?php echo $eventDate;?></span><br />
     <strong>Time:</strong><span><?php echo $eventTime;?></span><br/>
     <?php
@@ -54,12 +54,5 @@ $location = $meta["_kcal_location"][0];
         <span>Add to Calendar</span><i class="fa icon-add"></i></a>
     </div>
     <div class="clearfix"></div>
-<footer class="entry-meta">
-<?php 
-    echo "<h3>Share this Article</h3>";
-    londonfencing_share_single(true);
-    edit_post_link( esc_html__( 'Edit', 'quark' ) . ' <i class="fa fa-angle-right"></i>', '<div class="edit-link">', '</div>' ); 
-    ?>
-</footer>
 </article>
 <div class="clearfix"></div>
