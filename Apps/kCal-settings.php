@@ -1,26 +1,26 @@
 <?php
 
 /*
- * This file displays the admin settings options page for Twitter
+ * This file displays the admin settings options page for kCal
  */
 class kCalSettings
 {
     //holds values used in settings fields
     private $options;
-    
+
     public function __construct()
     {
         add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
     }
-    
+
     public function add_settings_page()
     {
         add_options_page(
-            'Settings Admin', 
-            'Events Manager Settings', 
-            'manage_options', 
-            'manage-calendar-settings', 
+            'Settings Admin',
+            'Events Manager Settings',
+            'manage_options',
+            'manage-calendar-settings',
             array( $this, 'create_admin_page' )
         );
     }
@@ -32,13 +32,13 @@ class kCalSettings
         $this->options = get_option("kcal_settings");
 ?>
         <div class="wrap">
-            <h2>Events Manager Settings</h2>           
+            <h2><?php _e('Events Manager Settings', 'kcal');?></h2>
             <form method="post" action="options.php">
 <?php
                 // This prints out all hidden setting fields
-                settings_fields( "kcal-settings-group" );   
+                settings_fields( "kcal-settings-group" );
                 do_settings_sections( "kcal_settings" );
-                submit_button(); 
+                submit_button();
 ?>
             </form>
         </div>
@@ -53,21 +53,21 @@ class kCalSettings
         add_settings_section("kcal-pages", "Events Manager Pages", array($this, "print_section_info"), "kcal_settings");
         add_settings_section("kcal-rssEvents", "RSS Events Import", array($this, "rss_section_info"), "kcal_settings");
         add_settings_field(
-            "fullcalendar_page", 
-            "Full Calendar (copy full-calendar.tpl.php)", 
-            array($this, "fullcalendar_page_callback"), 
-            "kcal_settings", 
+            "fullcalendar_page",
+            __("Full Calendar (copy full-calendar.tpl.php)", 'kcal'),
+            array($this, "fullcalendar_page_callback"),
+            "kcal_settings",
             "kcal-pages"
         );
         add_settings_field(
-            "import_rss", 
-            "RSS Feed to import events", 
-            array($this, "kcal_rss_events"), 
-            "kcal_settings", 
+            "import_rss",
+            __("RSS Feed to import events", 'kcal'),
+            array($this, "kcal_rss_events"),
+            "kcal_settings",
             "kcal-rssEvents"
         );
     }
-    
+
     /**
     * Sanitize each setting field as needed
     *
@@ -81,17 +81,17 @@ class kCalSettings
 
         return $input;
     }
-    /** 
+    /**
      * Print the Section text
      */
     public function print_section_info()
     {
-      print("Enter the slugs for pages you have created (e.g calendar). DO NOT USE SPACES. Be sure to copy in the templates you need for the pages you want into  your theme.");
+      print(__("Enter the slugs for pages you have created (e.g calendar). DO NOT USE SPACES. Be sure to copy in the templates you need for the pages you want into  your theme.", 'kcal' ));
     }
     public function rss_section_info(){
-      print("Enter the URL for an RSS you want to import events from.");
+      print(__("Enter the URL for an RSS you want to import events from.", 'kcal' ));
     }
-    /** 
+    /**
      * Get the settings option array and print one of its values
      */
     public function fullcalendar_page_callback()
@@ -105,6 +105,6 @@ class kCalSettings
       $rssEvent = (isset($this->options["kcal_rss_events"])) ? $this->options["kcal_rss_events"] : "";
       printf("<input type=\"text\" id=\"kcal_rss_events\" name=\"kcal_settings[kcal_rss_events]\" value=\"%s\" size=\"50\"/>",
             esc_attr($rssEvent));
-      
+
     }
 }

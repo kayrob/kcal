@@ -51,10 +51,3 @@ if (!empty($eventLink) && strtolower($eventLink) != "null" && false !== $eventLi
 </div>
 </article>
 <div class="clearfix"></div>
-<?php
-if (isset($postIter) && $postIter < ($numPosts-1)){ 
-    echo "<div class=\"event-spacer\">";
-    echo "<i class=\"fa icon-sword\"></i>";
-    echo "</div>"; 
-}
-?>

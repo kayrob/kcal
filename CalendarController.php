@@ -12,7 +12,7 @@ class CalendarController{
         global $blog_id;
         $response = "false";
         if (is_admin()){
-        
+
             $action = $post["input"];
             unset($post["input"]);
             unset($post["action"]);
@@ -20,7 +20,7 @@ class CalendarController{
             unset($post["nonce"]);
             unset($post["p"]);
             unset($post["attr"]);
-        
+
             $cal = new AdminCalendar();
             switch ($action){
                 case "u":
@@ -46,12 +46,12 @@ class CalendarController{
     * @return void
     */
     public function adminEventsAction($post){
-    
+
         $response = "false";
-        
+
         //if is loggged in and has permission to edit
         if (is_admin()){
-            
+
             $action = $post["input"];
             unset($post["input"]);
             unset($post["action"]);
@@ -59,7 +59,7 @@ class CalendarController{
             unset($post["nonce"]);
             unset($post["p"]);
             unset($post["attr"]);
-        
+
             $cal = new AdminCalendar();
             switch ($action){
                 case("r"):
@@ -111,7 +111,7 @@ class CalendarController{
         return $ca->buildCalendarCSS();
         die();
     }
-    
+
     /**
     * Autocomplete for event tags
     * @access public
@@ -136,7 +136,7 @@ class CalendarController{
     */
     public function userGetAjaxEvent(Request $request){
         $response = 'false';
-        
+
         $get = Quipp()->getRequest()->query->all();
         if (isset($get["assetView"]) && (int) $get["assetView"] > 0){
         	$response = Quipp()->getModule('CalendarWidgets')->get_ajax_user_event($get['assetView']);
@@ -152,7 +152,7 @@ class CalendarController{
     */
     public function getCalendarsAjax(){
         $response = "false";
-        
+
         $get = $_GET;
         if (isset($get["calendar"]) && trim($get["calendar"]) === "s"){
             $c = new Calendar();
@@ -170,7 +170,7 @@ class CalendarController{
     */
     public function getCalendarsEventsAjax(){
         $response = "false";
-        
+
         $get = $_GET;
         if (isset($get["calendar"]) && preg_match("/^[0-9]{1,6}$/",$get["calendar"],$matches)){
             $cw = new CalendarWidgets();
@@ -188,7 +188,7 @@ class CalendarController{
     */
     public function getCalendarsQuickViewEvents(){
         $response = "false";
-        
+
         $w = array_values(get_option("widget_kcal-mini-widget", array()));
         $calSettings = (isset($w[0]["quickView_calendars"])) ? $w[0]["quickView_calendars"]: array();
         
@@ -213,14 +213,14 @@ class CalendarController{
     * @return void
     */
     public function getCalendarsQuickViewCalendar(){
-        
+
         $response = "false";
-        
+
         $w = array_values(get_option("widget_kcal-mini-widget", array()));
         $calSettings = (isset($w[0]["quickView_calendars"])) ? $w[0]["quickView_calendars"]: array();
-        
+
         $get = $_GET;
-        if (isset($get["qvAdv"]) && preg_match("/(-)?[1]{1}/",trim($get["qvAdv"]),$matches) && isset($get["qvStamp"]) && preg_match("/^[0-9]{8,}$/",trim($get["qvStamp"]),$match)){
+        if (isset($get["qvAdv"]) && preg_match("/(-)?[1]{1}/",trim($get["qvAdv"]),$matches) && isset($get["qvStamp"]) && preg_match("/^[0-9]{4}(\-\d{2}){2}$/",trim($get["qvStamp"]),$match)){
             $cw = new CalendarWidgets();
             $response = $cw->quick_view_calendar_ajax(trim($get["qvAdv"]),trim($get["qvStamp"]), $calSettings);
         }
@@ -228,7 +228,7 @@ class CalendarController{
         echo $response;
         die();
     }
-    
+
     /**
     * General method to retrieve the upcoming events in HTML for the full calendar list view when cycling through dates
     * Ajax route
@@ -246,11 +246,11 @@ class CalendarController{
       echo $response;
       die();
     }
-    
+
     public function buildCalendarsRSS(){
-        
+
         $get = $_GET;
-      
+
         $rss = "";
         $cw = new CalendarWidgets();
         if (isset($get["calendar"])){
@@ -263,15 +263,15 @@ class CalendarController{
         //echo $rss;
         return $rss;
     }
-    
+
     public function addToCalendar(){
-        
+
         $get = $_GET;
         $output = "";
         $fileName = site_url()." Events";
-        
+
         if (isset($get["calID"]) || isset($get["eID"])){
-            
+
             $cw = new CalendarWidgets();
             $get["calendar"] = $get["calID"];
             if (isset($get["eID"])){
@@ -281,7 +281,7 @@ class CalendarController{
             unset($get["calID"]);
             $output = $cw->output_ics($get);
             if (isset($get["calendar"]) && isset($get["start"])){
-                
+
                 $calendars = $cw->get_calendar_details();
                 if (isset($calendars[$get["calendar"]])){
                     $fileName = preg_replace("/[^A-Za-z0-9]/","",$calendars[$get["calendar"]]["name"]) . "Events";
@@ -296,12 +296,12 @@ class CalendarController{
                 }
             }
         }
-        
+
         header("Content-Type: text/Calendar");
         header("Content-Disposition: inline; filename=$fileName.ics");
         die($output);
     }
-    
+
     public function buildCalendarsCSS()
     {
         $c = new Calendar();

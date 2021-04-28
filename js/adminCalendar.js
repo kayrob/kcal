@@ -702,19 +702,18 @@ if (jQuery("input[name='kCal_mb_nonce']").length > 0){
         imgField = "img" + formField;
         tb_show('', 'media-upload.php?type=image&amp;TB_iframe=true');
         window.send_to_editor = function(html) {
-            console.log(html);
             var fileURL = html.match(/http\:(s)?[^\s]*\.(png|jpg|jpeg|gif|bmp)/);
-
+           
             if (fileURL != 'undefined' && fileURL != null){
                 jQuery('#' + formField).val(fileURL[0]);
                 jQuery('#' + imgField).attr('src', fileURL[0]);
             }
-
+            
             tb_remove();
             window.send_to_editor = restoreEditor;
-
+            
           };
         return false;
     });
-
+    
 }

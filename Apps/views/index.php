@@ -10,7 +10,7 @@ if (is_admin())
     echo '<style type="text/css">';
     $cal->buildCalendarCSS();
     echo '</style>';
-    
+
 ?>
 
 
@@ -29,7 +29,7 @@ include_once(__DIR__ ."/edit_recurring_event.php");
 <div id="leftColAdmin">
 	<p>Current Calendars:</p>
 	<?php echo($cal->display_calendar_list_admin()); ?>
-        <a id="calendar-new" value="Create New Calendar" href="<?php echo admin_url();?>edit-tags.php?taxonomy=calendar&post_type=event">Create New Calendar</a>
+        <a id="calendar-new" value="<?php _e('Create New Calendar', 'kcal');?>" href="<?php echo admin_url();?>edit-tags.php?taxonomy=calendar&post_type=event"><?php _e('Create New Calendar', 'kcal');?></a>
 </div>
 <div id="centreCol">
 	<div id="calendarTitle"><h2 class="fc-header-title"></h2></div>

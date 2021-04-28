@@ -1,0 +1,24 @@
+#pQVdateTime{display:none}
+#calendarWidgetTable td,#calendarWidgetTable th{width:calc(100% / 7)}
+#calendarWidgetTable td{text-align:center;padding:6px 3px}
+#calendarWidgetTable .tdCalSpacer{color:#ccc}
+#calendarWidgetTable .calToday{background-color:#220e10;color:#ccc}
+#calendarWidgetTable .tdQvEvents{cursor:pointer;color:#e6402a}
+.kcal-mini-widget{position:relative;margin-left:auto;margin-right:auto;max-width:250px;width:100%}
+.kcal-mini-widget h4{margin:5px 0;text-align:center}
+.kcal-mini-widget h4 span{display:inline-block;width:calc(100% - 100px)}
+.kcal-mini-widget h4 button{max-width:45px}
+#dlgQuickView{z-index:1;height:auto;width:300px;margin:0;position:absolute;box-shadow:1px #f0f0f0;background-color:#fff;display:none}
+#dlgQuickView .close-btn{font-size:28px;text-decoration:none;position:absolute;top:-10px;right:-8px;height:30px;width:30px;border-radius:20px;background-color:#333;text-align:center;color:#fff;line-height:1.1}
+#dlgQuickView dl{margin:0;padding:5px}
+#dlgQuickView dt{margin-top:10px;margin-left:10px}
+#dlgQuickView dd{margin-left:10px}
+#dlgQuickView dl:nth-child(even){background-color:#f2f2f2}
+.kcal-calendars-list-view{max-width:400px;width:100%;}
+.kcal-calendars-list-view ul{border-bottom:1px solid #d8d8d8;margin:10px 0;padding:0;list-style:none;}
+.kcal-calendars-list-view li,.kcal-feed-item{border-top:1px solid #d8d8d8}
+.kcal-calendars-list-view li:first-child, .kcal-feed-item.first{border-top:0}
+.kcal-calendars-list-view a{background: #fff;display:block;padding:8px 30px 8px 5px;position:relative;text-decoration:none;transition:0.4s background ease;width: 100%}
+.kcal-calendars-list-view a:hover{background:#f0f0f0;}
+.kcal-calendars-list-view a span{background:#fff;border-radius:60px;position:absolute;right:10px;vertical-align: middle;padding: 10px 13px;text-align: center;top:2px;transition:0.4s background ease;}
+.kcal-calendars-list-view a:hover span{background: #e5e5e5;}

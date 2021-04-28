@@ -68,10 +68,16 @@ class AdminCalendar extends Calendar {
                 "_kcal_recurrenceEnd"       => $_POST["_kcal_recurrenceEnd"],
                 "_kcal_eventStartTime"      => $_POST["_kcal_eventStartTime"],
                 "_kcal_eventEndTime"        => $_POST["_kcal_eventEndTime"],
-                "_kcal_locationMap"         => $_POST["_kcal_locationMap"]
+                "_kcal_locationMap"         => (isset($_POST["_kcal_locationMap"]) ? $_POST["_kcal_locationMap"] : '' ),
+                "_kcal_timezone"            => (isset($_POST['_kcal_timezone']) ? $_POST['_kcal_timezone'] : get_option('gmt_offset') ),
+                "_kcal_allDay"              => (isset($_POST['_kcal_allDay']) ? '1' : '0')
 
             );
 
+			if (!isset($_POST['_kcal_allDay'])) {
+				unset($meta['_kcal_allDay']);
+				delete_post_meta($post_id,'_kcal_allDay');
+			}
             $this->update_event($meta, $post_id);
     }
 
@@ -108,9 +114,19 @@ class AdminCalendar extends Calendar {
         $eventStartTime = (isset($meta["_kcal_eventStartTime"]))? $meta["_kcal_eventStartTime"] : "12:00 AM";
         $eventEndTime = (isset($meta["_kcal_eventEndTime"])) ? $meta["_kcal_eventEndTime"] : "12:15 AM";
 
-        $timezone = get_option('gmt_offset');
-        $date = new DateTime(trim($meta["_kcal_eventStartDate"])." ".$eventStartTime, new DateTimeZone($timezone));
-        $date2 = new DateTime(trim($meta["_kcal_eventEndDate"])." ".$eventEndTime, new DateTimeZone($timezone));
+
+        if (isset($meta['_kcal_timezone'])) {
+            try {
+                $timezone = new DateTimeZone($meta['_kcal_timezone']);
+            } catch(Exception $e) {
+                $timezone = new DateTimeZone(get_option('gmt_offset'));
+            }
+        } else {
+            $timezone = new DateTimeZone(get_option('gmt_offset'));
+        }
+
+        $date = new DateTime(trim($meta["_kcal_eventStartDate"])." ".$eventStartTime, $timezone);
+        $date2 = new DateTime(trim($meta["_kcal_eventEndDate"])." ".$eventEndTime, $timezone);
 
         $startDate = $date->format('U');
         $endDate = $date2->format('U');
@@ -141,9 +157,11 @@ class AdminCalendar extends Calendar {
         if (isset($meta["_kcal_recurrenceInterval"]) && isset($meta["_kcal_recurrenceEnd"])){
             list($values["_kcal_recurrenceInterval"],$values["_kcal_recurrenceEnd"]) = $this->set_recurrence_values($meta["_kcal_recurrenceType"],$meta["_kcal_recurrenceInterval"],$meta["_kcal_recurrenceEnd"], $post_id);
         }
-        $values["_kcal_allDay"] = (isset($meta["_kcal_allDay"]) && trim($meta["_kcal_allDay"]) == "1")?"1":"0";
+
+        $values["_kcal_allDay"] = (isset($meta["_kcal_allDay"]) )?"1":"0";
         $values["_kcal_eventURL"] = esc_url($meta["_kcal_eventURL"]);
         $values["_kcal_locationMap"] = esc_url($meta["_kcal_locationMap"]);
+        $values['_kcal_timezone'] = $meta['_kcal_timezone'];
         return $values;
     }
 
@@ -156,7 +174,6 @@ class AdminCalendar extends Calendar {
     * @param string $recurEnd
     * @param string $firstEventStart
     * @param string $firstEventEnd
-    * @see create_timestamp()
     * @return array|void
     */
     protected function create_recurring_yearly_dates($post_id,$recurrence,$interval,$recurEnd,$firstEventStart,$firstEventEnd){
@@ -199,7 +216,6 @@ class AdminCalendar extends Calendar {
     * @param string $recurEnd
     * @param string $firstEventStart
     * @param string $firstEventEnd
-    * @see create_timestamp()
     * @return array
     */
     protected function create_recurring_monthly_dates($post_id,$recurrence,$interval,$recurEnd,$firstEventStart,$firstEventEnd){
@@ -244,7 +260,6 @@ class AdminCalendar extends Calendar {
     * @param string $recurEnd
     * @param string $firstEventStart
     * @param string $firstEventEnd
-    * @see create_timestamp()
     * @return array
     */
     protected function create_recurring_daily_weekly_dates($post_id,$recurrence,$interval,$recurEnd,$firstEventStart,$firstEventEnd){
@@ -388,6 +403,7 @@ class AdminCalendar extends Calendar {
 
             if ($validData == true){
                 $dataSet = $this->create_edit_event_values($meta, $post_id);
+
                 if (isset($dataSet) && is_array($dataSet)){
                     foreach($dataSet as $field => $value){
                         update_post_meta($post_id, $field, $value);
@@ -412,7 +428,7 @@ class AdminCalendar extends Calendar {
     * @return string
     */
     public function update_recurring_events($post){
-        $validData = "Events could not be updated.";
+        $validData = __("Events could not be updated.", 'kcal');
         global $wpdb;
         if (isset($post["recurrenceID"]) && isset($post["eventID"]) && preg_match("/^(\d{1,})(\-".$post["recurrenceID"].")$/",trim($post["eventID"]),$matches) && preg_match("/^[0-9]{1,}$/",trim($post["recurrenceID"]),$match)){
             if (is_admin() && current_user_can("edit_events", $matches[1])){
@@ -437,7 +453,7 @@ class AdminCalendar extends Calendar {
                         }
                     }
                     else{
-                        $validData .= "Date and/or Time is not the correct format.";
+                        $validData .= __("Date and/or Time is not the correct format.", 'kcal');
                     }
                 }
                 else{
@@ -461,12 +477,12 @@ class AdminCalendar extends Calendar {
                         }
                     }
                     else{
-                        $validData .= "Date and/or Time is not the correct format.";
+                        $validData .= __("Date and/or Time is not the correct format.", 'kcal');
                     }
                 }
             }
         }
-        else{ $validData = 'no event or calendar selected';}
+        else{ $validData = __('no event or calendar selected', 'kcal');}
         return $validData;
     }
 
@@ -479,7 +495,7 @@ class AdminCalendar extends Calendar {
     */
     public function display_calendar_list_admin(){
         $res = $this->get_calendars_common();
-        $calsList = '<p id="calsList">There are no calendars</p>';
+        $calsList = '<p id="calsList">'.__('There are no calendars', 'kcal').'</p>';
         if ($res != false){
             $calsList = '<ul id="calsList">';
             foreach ($res as $row){
@@ -515,7 +531,7 @@ class AdminCalendar extends Calendar {
      * @return string
      */
     public function delete_events_main($post){
-        $validData = "Event could not be deleted";
+        $validData = __("Event could not be deleted", 'kcal');
         if (isset($post["eventID"]) && preg_match("/^(\d{1,})(\-)?(\d)*$/",trim($post["eventID"]),$matches)){
             if (is_admin() && current_user_can("edit_events", $matches[1])){
                 if (isset($post["recurrenceID"]) && preg_match("/^(\d{1,})$/",trim($post["recurrenceID"]),$matchR)){
@@ -615,7 +631,8 @@ class AdminCalendar extends Calendar {
                 "_kcal_recurrenceEnd"       => "",
                 "_kcal_eventStartTime"      => $eventTime,
                 "_kcal_eventEndTime"        => $eventTime + (60*60*4),
-                "_kcal_locationMap"         => ""
+                "_kcal_locationMap"         => "",
+                '_kcal_timezone'            => get_option('gmt_offset')
             );
 
             $created = wp_insert_post($newEvent);
@@ -623,19 +640,19 @@ class AdminCalendar extends Calendar {
               if ($calendar > 0){
                 wp_set_post_terms($created, array($calendar), "calendar", false);
               }
-              $uploaded["success"][] = "Event: <a href=\"".admin_url("post.php?post=".$created."&action=edit")."\">" . (string)$event->{"title"} . "</a> was imported.";
+              $uploaded["success"][] = __("Event:", 'kcal') . "<a href=\"".admin_url("post.php?post=".$created."&action=edit")."\">" . (string)$event->{"title"} . __("</a> was imported.", 'kcal');
             }
             else{
-              $uploaded["error"][] = "Event: " . (string)$event->{"title"} . " was not imported";
+              $uploaded["error"][] = __("Event:", 'kcal') . (string)$event->{"title"} . __(" was not imported", 'kcal');
             }
           }
         }
       }
       else{
-        $uploaded["error"][] = "RSS events could not be imported. Check the URL and retry";
+        $uploaded["error"][] = __("RSS events could not be imported. Check the URL and retry", 'kcal');
       }
       if (isset($uploaded["success"])){
-        $uploaded["success"][] = "RSS Content can't be guaranteed. Events may need to be updated for content and dates.";
+        $uploaded["success"][] = __("RSS Content can't be guaranteed. Events may need to be updated for content and dates.", 'kcal');
       }
       return $uploaded;
     }
@@ -662,7 +679,8 @@ class AdminCalendar extends Calendar {
               "_kcal_recurrenceEnd"       => "",
               "_kcal_eventStartTime"      => "",
               "_kcal_eventEndTime"        => "",
-              "_kcal_locationMap"         => ""
+              "_kcal_locationMap"         => "",
+              "_kcal_timezone"            => get_option('gmt_offset')
           );
           $timezone = new DateTimeZone(get_option('gmt_offset'));
           foreach($lines as $info){
@@ -707,10 +725,10 @@ class AdminCalendar extends Calendar {
             if ($calendar > 0){
               wp_set_post_terms($created, array($calendar), "calendar", false);
             }
-            $uploaded["success"][] = "Event: <a href=\"".admin_url("post.php?post=".$created."&action=edit")."\">" . $newEvent["post_title"] . "</a> was imported.";
+            $uploaded["success"][] = __("Event", 'kcal') . ": <a href=\"".admin_url("post.php?post=".$created."&action=edit")."\">" . $newEvent["post_title"] . "</a> " . __("was imported.", 'kcal');
           }
           else{
-            $uploaded["error"][] = "Event: " . $newEvent["post_title"] . " was not imported";
+            $uploaded["error"][] = __("Event", 'kcal') . ": " . $newEvent["post_title"] . __(" was not imported", 'kcal');
           }
           unlink($icsFile);
         }

@@ -15,16 +15,24 @@ class CalendarWidgets extends Calendar {
     */
     public function retrieve_all_events($startDate = false, $endDate = false, $calendarID = 0, $showPrivate = false, $customMetaQuery = array())
     {
-        $date = new DateTime();
-        $timeDiff = ($date->getOffset() + (int)$this->timezone) * (60*60);//may be negative value
-        $current = $date->getTimestamp() + $timeDiff;
-        $today = mktime(0,0,0, date("n", $current), date("j", $current), date("Y", $current));
+
+        try {
+            $timezoneObj = new \DateTimeZone($this->timezone);
+        } catch (exception $e) {
+            $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+        }
+
+        $date = new DateTime('', $timezoneObj);
+        $current = $date->getTimestamp();
+        $today = mktime(0,0,0, $date->format('n'), $date->format('j'), $date->format('Y'));
+
 
         $whereDate = ($startDate == false) ? $today : $startDate;
 
 
         $whereEndOp = ($endDate == false) ? ">=" : "<=";
         $whereEndStr = ($endDate == false) ? $whereDate : $endDate;
+
         $metaQuery = array(
             "relation"  => "AND",
             array(
@@ -70,10 +78,11 @@ class CalendarWidgets extends Calendar {
         $args = array(
             "post_type"     => "event",
             "post_status"   => $postStatus,
-            "posts_per_page"  => -1,
+            "numberposts"  => -1,
             "order_by"      => "_kcal_eventStartDate",
             "order"         => "ASC",
-            "meta_query"    => $metaQuery
+            "meta_query"    => $metaQuery,
+			"posts_per_page"	=> -1
         );
 
         if (is_numeric($calendarID) && (int)$calendarID > 0){
@@ -105,7 +114,6 @@ class CalendarWidgets extends Calendar {
                 $allEvents[] = $re;
             }
         }
-
         if (!empty($allEvents)){
             foreach($allEvents as $event){
                 $eventID = $event->ID;
@@ -113,12 +121,22 @@ class CalendarWidgets extends Calendar {
                 $recurEnd = 0;
                 $eventMeta = get_post_meta($event->ID);
                 $eventCalendar = wp_get_post_terms($event->ID, "calendar");
+
                 if (isset($eventCalendar[0]->term_id)){
-                    $event->calendarID = $eventCalendar[0]->term_id;
+					$event->calendarID = $eventCalendar[0]->term_id;
+
+                    if ($calendarID !== false) {
+                        foreach($eventCalendar as $calTerm) {
+                            if ($calTerm->term_id == $calendarID) {
+                                $event->calendarID = $calendarID;
+                            }
+                        }
+                    }
                     $event->eventStartDate = $eventMeta["_kcal_eventStartDate"][0];
 
                     $event->eventEndDate = $eventMeta["_kcal_eventEndDate"][0];
                     $event->detailsAlternateURL = $eventMeta["_kcal_eventURL"][0];
+                    $event->timezone = (isset($eventMeta["_kcal_timezone"])) ? $eventMeta["_kcal_timezone"][0] : get_option('gmt_offset');
                     $res[$event->ID] = $event;
 
                     $recurrence = (isset($eventMeta["_kcal_recurrenceType"][0])) ? $eventMeta["_kcal_recurrenceType"][0] : "None";
@@ -136,7 +154,7 @@ class CalendarWidgets extends Calendar {
                             }
                             $recurID = "";
                             $recurID = $eventID."-".$metaID;
-                            $recur["calendarID"] = $eventCalendar[0]->term_id;
+                            $recur["calendarID"] = $event->calendarID;
                             $recur["eventStartDate"] = $eventMeta["_kcal_eventStartDate"][0];
                             $recur["eventEndDate"] = $eventMeta["_kcal_eventEndDate"][0];
                             $recur["detailsAlternateURL"] = $eventMeta["_kcal_eventURL"][0];
@@ -144,6 +162,7 @@ class CalendarWidgets extends Calendar {
                             $recur["eventEndDate"] = $endTime;
                             $recur["ID"] = $recurID;
                             $recur["metaID"] = $metaID;
+                            $recur["timezone"] = (isset($eventMeta["_kcal_timezone"])) ? $eventMeta["_kcal_timezone"][0] : get_option('gmt_offset');
                             $res[$recurID] = json_decode(json_encode($recur));
                         }
                     }
@@ -266,7 +285,6 @@ class CalendarWidgets extends Calendar {
     public function upcoming_events_widget($limit, $calendarID = false, $start = false, $end = false, $showPrivate = false, $customMetaQuery = array()){
         if (intval($limit, 10) > 0) {
             $res = $this->retrieve_all_events($start, $end, intval($calendarID), $showPrivate, $customMetaQuery);
-
             $calendars = $this->get_calendar_details();
             $date = new DateTime();
             $timeDiff = ($date->getOffset() + (int)$this->timezone) * (60*60);//may be negative value
@@ -356,7 +374,7 @@ class CalendarWidgets extends Calendar {
         $rss .= "<rss version=\"2.0\">"."\n";
         $rss .= "<channel>"."\n";
         $rss .= "<title><![CDATA[" . $title ."]]></title>"."\n";
-        $rss .= "<description>Upcoming Events</description>"."\n";
+        $rss .= "<description>" . __('Upcoming Events', 'kcal') ."</description>"."\n";
         $rss .= "<lastBuildDate>" .date("D d M Y G:i:s") ."</lastBuildDate>"."\n";
 
         $calendars = $this->get_calendar_details();
@@ -404,7 +422,6 @@ class CalendarWidgets extends Calendar {
      * @access public
      * @param array   $get
      * @get_calendar_details()
-     * @create_timestamp()
      */
     public function output_ics($get)
     {
@@ -449,15 +466,15 @@ class CalendarWidgets extends Calendar {
                             $endTimeStamp = $row->eventEndDate;
                             $consecDays = ceil(($endTimeStamp-$startTimeStamp)/(60*60*24));
                             $endTimeStamp += ($consecDays > 1)?60*60*24:0;
-                            $eventStart = "TZID=".$timezone.":".date("Ymd\THis", trim($row->eventStartDate ));
-                            $eventEnd = "TZID=".$timezone.":".date("Ymd\THis", trim($row->eventEndDate));
+                            $eventStart = "TZID=".$row->timezone.":".date("Ymd\THis", trim($row->eventStartDate ));
+                            $eventEnd = "TZID=".$row->timezone.":".date("Ymd\THis", trim($row->eventEndDate));
                             $eventStart = ($consecDays > 1)?"VALUE=DATE:".date("Ymd\THis", trim($row->eventStartDate)):$eventStart;
                             $eventEnd = ($consecDays > 1)?"VALUE=DATE:".date("Ymd\THis", trim($row->eventEndDate)):$eventEnd;
                             $description = ($consecDays > 1)?"(".date("g:i a", $startTimeStamp)."-".date("g:i a", $endTimeStamp).")":"";
 
                             $output .= "BEGIN:VEVENT\n";
                             $output .= "UID:uid".trim($row->ID)."@".site_url()."\n";
-                            $output .= "DTSTAMP;TZID=".$timezone.":".str_replace(" ", "T", preg_replace("/[:-]/", "", trim($post->post_date)))."\n";
+                            $output .= "DTSTAMP;TZID=".$row->timezone.":".str_replace(" ", "T", preg_replace("/[:-]/", "", trim($post->post_date)))."\n";
                             $output .= "DTSTART;$eventStart\n";
                             $output .= "DTEND;$eventEnd\n";
                             $output .= "SUMMARY: ".$blog_title.": ".trim($post->post_title)."\n";
@@ -480,7 +497,7 @@ class CalendarWidgets extends Calendar {
      */
     public function quick_view_dialog()
     {
-        echo '<div id="dlgQuickView" title="Events"></div>';
+        echo '<div id="dlgQuickView" title="'.__('Events', 'kcal').'"></div>';
     }
 
 
@@ -493,36 +510,45 @@ class CalendarWidgets extends Calendar {
      * @see retrieve_all_events()
      * @return string
      */
-    public function get_quick_view_events_ajax($timestamp, $calSettings, $calPage, $eventPage){
+    public function get_quick_view_events_ajax($timestamp, $calSettings){
         $output = "false";
         if (preg_match("/^[0-9]{8,}$/", $timestamp, $matches)) {
-            $dateSel = date("Y-m-d", $timestamp);
-            $endDateStamp = ($timestamp)+(60*60*24);
-            $dateSelEnd = date("Y-m-d", $endDateStamp);
+
+            try {
+                $timezoneObj = new \DateTimeZone($this->timezone);
+            } catch (exception $e) {
+                $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+            }
+
+            $dateS = new \DateTime('', $timezoneObj);
+            $dateE = new \DateTime('', $timezoneObj);
+
+            $dateSel = mktime(0, 0, 0, date('n', $timestamp), date('j', $timestamp), date('Y', $timestamp) );
+            $endDateStamp = $dateSel + (60*60*30);
+            $dateSelEnd = date('Y-m-d', $endDateStamp);
             $calendars = $this->get_calendar_details();
-            $res = $this->retrieve_all_events($dateSel, $dateSelEnd);
+
+            $res = $this->retrieve_all_events($dateSel, $endDateStamp);
+
+            if (empty($calSettings)) {
+                $calSettings = array_keys($calendars);
+            }
+
             if ($res != false) {
                 $output = "<dl>";
-             /*   foreach($res as $row) {
+                foreach($res as $row) {
                     if (isset($calendars[$row->calendarID]) && in_array($row->calendarID, $calSettings)) {
-                        $eventDate = ($startDate == $endDate)?date('M d', $startTimeStamp):date('M d', $startTimeStamp)."-".date('M d', $endTimeStamp);
-                        $link = (!empty($row->detailsAlternateURL))?"http://".trim($row->detailsAlternateURL): get_permalink($row->ID);
+                        $dateS->setTimestamp($row->eventStartDate);
+                        $dateE->setTimestamp($row->eventEndDate);
+                        $eventDate = ($dateS->format('Y-m-d') == $dateS->format('Y-m-d') ) ? $dateS->format('M d') : $dateS->format('M d') . "-" . $dateE->format('M d');
+                        $link = get_permalink($row->ID);
 
-                        $link = "http://" . trim($row->detailsAlternateURL, "http://");
-                        if (!empty($calPage) || !empty($eventPage)){
-                            if (!empty($eventPage)){
-                                $link = "/" . $eventPage ."?event=" . trim($row->itemID);
-                            }
-                            else if (!empty($calPage)){
-                                $link = "/" . $calPage ."?event=" . trim($row->itemID) ."&start={$startTimeStamp}";
-                            }
-                        }
-                        $eventTitle = (!empty($link)) ? "<a href=$link>".trim($row->eventTitle)."</a>" : trim($row->eventTitle) ;
+                        $eventTitle = (!empty($link)) ? "<a href=$link>".trim($row->post_title)."</a>" : trim($row->post_title) ;
 
-                        $output .= "<dt style=\"color:".$calendars[trim($row->calendarID)]["colour"]."\">".$eventTitle."</dt>";
-                        $output .= "<dd>$eventDate &#8226; ".date("g:i a", $startTimeStamp)."-".date("g:i a", $endTimeStamp)."<br />".trim($row->description)."</dd>";
+                        $output .= "<dt style=\"background-color:".$calendars[trim($row->calendarID)]["colour"].";color:".$calendars[trim($row->calendarID)]["text"]."\">".$eventTitle."</dt>";
+                        $output .= "<dd style=\"background-color:".$calendars[trim($row->calendarID)]["colour"].";color:".$calendars[trim($row->calendarID)]["text"]."\">$eventDate &#8226; ".$dateS->format("g:i a") . "-" . $dateE->format("g:i a")."<br />".trim($row->description)."</dd>";
                     }
-                }*/
+                }
                 $output .= "</dl>";
             }
         }
@@ -574,16 +600,28 @@ class CalendarWidgets extends Calendar {
     protected function get_quick_view_dates($Month, $Year, $calSettings)
     {
         $dates = array();
-        $eventStart = $Year."-".str_pad($Month,2,"0",STR_PAD_LEFT)."-01";
-        $monthNext = (($Month + 1) > 12)?"01":(($Month + 1));
-        $yearNext = (($Month + 1) > 12)?($Year + 1):$Year;
-        $eventEnd = $yearNext."-".str_pad($monthNext,2,"0",STR_PAD_LEFT)."-01";
+        $eventStart = mktime(0, 0, 0, str_pad($Month,2,"0",STR_PAD_LEFT), "01", $Year);
+        $monthNext = (($Month + 1) > 12) ? "01" : (($Month + 1));
+        $yearNext = (($Month + 1) > 12) ? ($Year + 1) : $Year;
+        $eventEnd = mktime(0, 0, 0, str_pad($monthNext,2,"0",STR_PAD_LEFT), "01", $yearNext );
         $calendars = $this->get_calendar_details();
-        $res = $this->retrieve_all_events($eventStart,$eventEnd);
-        if ($res != false && !empty($calSettings)) {
+        $res = $this->retrieve_all_events($eventStart , $eventEnd);
+
+        if (empty($calSettings)) {
+            $calSettings = array_keys($calendars);
+        }
+
+        try {
+            $timezoneObj = new \DateTimeZone($this->timezone);
+        } catch (exception $e) {
+            $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+        }
+        $date = new \DateTime('', $timezoneObj);
+        if ($res != false) {
             foreach($res as $row) {
-                if (date('n', $row->eventStartDate) == $Month && date('Y', $row->eventStartDate) == $Year && isset($calendars[$row->calendarID]) && in_array($row->calendarID, $calSettings) ) {
-                    $datesAvailable[date('j', $row->eventStartDate)] = mktime(0, 0, 0, date('m', $row->eventStartDate), date('j', $row->eventStartDate), date('Y', $row->eventStartDate));
+                $date->setTimestamp($row->eventStartDate);
+                if ($date->format('n') == $Month && $date->format('Y') == $Year && isset($calendars[$row->calendarID]) && in_array($row->calendarID, $calSettings) ) {
+                    $datesAvailable[$date->format('j')] = mktime(0, 0, 0, $date->format('m'), $date->format('d'), $date->format('Y'));
                 }
             }
             if (isset($datesAvailable)){
@@ -607,8 +645,9 @@ class CalendarWidgets extends Calendar {
         get the current and next month as numerical values 1 through 12
         get the year for each of the current and next month as YYYY for display
         */
-        $Month = ($month != false && $month > 0 && $month < 13)?$month:date('n');
-        $Year = ($year != false && preg_match("/^20[0-9]{2}$/",$year,$matches))?$year:date('Y');
+
+        $Month = ($month != false && $month > 0 && $month < 13) ? $month : date('n', current_time('timestamp'));
+        $Year = ($year != false && preg_match("/^20[0-9]{2}$/",$year,$matches)) ? $year : date('Y', current_time('timestamp'));
         $datesAvailable = $this->get_quick_view_dates($Month, $Year, $calSettings);
         /*
         call functions to create arrays for each month for:
@@ -665,9 +704,17 @@ class CalendarWidgets extends Calendar {
     */
     public function quick_view_calendar_ajax($adv, $currentDate, $calSettings = array()){
         $qvCalendar = "false";
+
+        try {
+            $timezoneObj = new \DateTimeZone($this->timezone);
+        } catch (exception $e) {
+            $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+        }
+
+        $date = new \DateTime($currentDate, $timezoneObj);
         if ($adv == 1 || $adv == -1){
-            $currentMonth = date("n",$currentDate);
-            $currentYear = date("Y",$currentDate);
+            $currentMonth = $date->format('n');
+            $currentYear = $date->format('Y');
             $newMonth = $currentMonth + ($adv);
             $newYear = $currentYear;
             if ($newMonth == 13){
@@ -678,9 +725,10 @@ class CalendarWidgets extends Calendar {
                     $newMonth = 12;
                     $newYear--;
             }
-            $newTimeStamp = mktime(0,0,0,$newMonth,1,$newYear);
-            $calTitle = date("F Y",$newTimeStamp);
-            $qvCalendar = $this->quick_view_calendar($newMonth, $newYear, $calSettings)."~".$newTimeStamp."~".$calTitle;
+            $newTimeStamp = mktime(0, 0, 0, $newMonth, 1, $newYear);
+            $date->setTimestamp($newTimeStamp);
+            $calTitle = date('F Y', $newTimeStamp);
+            $qvCalendar = $this->quick_view_calendar($newMonth, $newYear, $calSettings)."~".date('Y-m-d', $newTimeStamp)."~".$calTitle;
         }
         return $qvCalendar;
     }
@@ -693,7 +741,6 @@ class CalendarWidgets extends Calendar {
     * @param false|array $get
     * @see retrieve_all_events()
     * @see get_calendar_details()
-    * @see create_timestamp()
     */
     public function fullCalendar_upcoming_events($limit,$get = false)
     {
@@ -703,32 +750,45 @@ class CalendarWidgets extends Calendar {
         $icsPage = (isset($o["icsFeed_page"]) && !empty($o["icsFeed_page"])) ? $o["icsFeed_page"] : "";
 
         //if (intval($limit,10) > 0){
-        $startDate = date("Y-m")."-01";
-        $endDate = (date("n", current_time("timestamp")) + 1 > 12) ? (date("Y", current_time("timestamp"))+1)."-".$this->format_month((date("n", current_time("timestamp"))+1)-12)."-01":date("Y", current_time("timestamp"))."-".$this->format_month(date("n", current_time("timestamp"))+1)."-01";
+        try {
+            $timezoneObj = new \DateTimeZone($this->timezone);
+        } catch (exception $e) {
+            $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+        }
+
+        $date = new \DateTime('', $timezoneObj);
+        $startDate = $date->format('Y-m')."-01";
+        $endDate = ($date->format('n') + 1 > 12) ? ($date->format('Y') + 1)."-".$this->format_month(($date->format('n')+1)-12)."-01":$date->format('Y')."-".$this->format_month($date->format("n")+1)."-01";
         if (isset($get['timestamp']) && preg_match("/^[0-9]{8,}$/",trim($get['timestamp']),$match)){
+            $date->setTimestamp($get['timestamp']);
             if (isset($get['cmmd']) && preg_match("/^(prev|next)$/",trim($get['cmmd']),$matches)){
               if (trim($get["cmmd"]) == "prev"){
-                  $endDate = date("Y-m",trim($get['timestamp']))."-01";
-                  $month = $this->format_month(date("n",trim($get['timestamp']))-1);
-                  $startDate = (date("n",trim($get['timestamp']))-1 == 0)?(date("Y",trim($get['timestamp']))-1)."-12-01":date("Y",trim($get['timestamp']))."-$month-01";
+                  //$endDate = date("Y-m",trim($get['timestamp']))."-01";
+                  $endDate = $date->format('Y-m') . -'01';
+                  //$month = $this->format_month(date("n",trim($get['timestamp']))-1);
+                  $month = $this->format_month($date->format('n')-1);
+                  //$startDate = (date("n",trim($get['timestamp']))-1 == 0)?(date("Y",trim($get['timestamp']))-1)."-12-01":date("Y",trim($get['timestamp']))."-$month-01";
+                  $startDate = ($date->format('n')-1 == 0)?($date->format('Y') -1 )."-12-01":$date->format('Y')."-$month-01";
               }
               else if (trim($get["cmmd"]) == "next"){
-                  $stMonth = $this->format_month(date("n",trim($get['timestamp']))+1);
-                  $endMonth = $this->format_month(date("n",trim($get['timestamp']))+2);
-                  $startDate = (date("n",trim($get['timestamp']))+1 == 13)?(date("Y",trim($get['timestamp']))+1)."-01-01":date("Y",trim($get['timestamp']))."-$stMonth-01";
-                  $endDate = (date("n",trim($get['timestamp']))+1 == 13)?(date("Y",trim($get['timestamp']))+1)."-02-01":date("Y",trim($get['timestamp']))."-$endMonth-01";
+                  $stMonth = $this->format_month($date->format('n') + 1);
+                  $endMonth = $this->format_month($date->format('n') + 2);
+                  $startDate = ($date->format('n') + 1 == 13) ? ($date->format('Y') + 1)."-01-01" : $date->format('Y')."-$stMonth-01";
+                  $endDate = ($date->format('n') + 1 == 13) ? ($date->format('Y') + 1)."-02-01" : $date->format('Y')."-$endMonth-01";
               }
             }
             else{
-              $stMonth = $this->format_month((date("n",trim($get['timestamp']))+1)-12);
-              $endMonth = $this->format_month(date("n",trim($get['timestamp']))+1);
-              $startDate = date("Y-m",trim($get['timestamp']))."-01";
-              $endDate = (date("n",trim($get['timestamp']))+1 > 12)?(date("Y",trim($get['timestamp']))+1)."-$stMonth-01":date("Y",trim($get['timestamp']))."-$endMonth-01";
+              $stMonth = $this->format_month(($date->format('n') + 1)-12);
+              $endMonth = $this->format_month($date->format('n') + 1);
+              $startDate = $date->format('Y-m')."-01";
+              $endDate = ($date->format('n') + 1 > 12)?($date->format('Y') + 1)."-$stMonth-01" : $date->format('Y')."-$endMonth-01";
             }
         }
 
-        $startTimeStamp = strtotime($startDate);
-        $endTimeStamp = strtotime($endDate);
+        $date->setTimestamp($startDate);
+        $startTimeStamp = $date->getTimestamp();
+        $date->setTimestamp($endDate);
+        $endTimeStamp = $date->getTimestamp();
         $res = $this->retrieve_all_events($startTimeStamp,$endTimeStamp);
         $calendars = $this->get_calendar_details();
 
@@ -738,12 +798,21 @@ class CalendarWidgets extends Calendar {
 
             $output = "<ul>";
             foreach ($res as $row) {
+              $date->setTimestamp($row->eventStartDate);
 
-              $startDate = date("Y-m-d", $row->eventStartDate);
-              $endDate = date("Y-m-d", $row->eventEndDate);
+              try {
+                $timezoneObj = new \DateTimeZone($this->timezone);
+              } catch (exception $e) {
+                $timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
+              }
+
+              $dateE = new \DateTime('', $timezoneObj);
+              $dateE->setTimestamp($row->eventEndDate);
+              $startDate = $date->format('Y-m-d');
+              $endDate = $dateE->format('Y-m-d');
               if (isset($calendars[substr(trim($row->calendarID), 0, 2)]) && in_array(trim($row->calendarID),$calList) /*&& $startTimeStamp > date('U')*/) {
                 if ($j < $limit) {
-                  $eventDate = ($startDate == $endDate) ? date('D M j, Y', $row->eventStartDate):date('D M j, Y', $row->eventStartDate)." - ".date('D M j, Y', $row->eventEndDate);
+                  $eventDate = ($startDate == $endDate) ? $date->format('D M j, Y') : $date->format('D M j, Y')." - ".$dateE->format('D M j, Y');
                   $link = get_permalink($row->ID);
                   if (isset($row->metaID)){
                     $link .= "?r=" . $row->metaID;
@@ -756,7 +825,7 @@ class CalendarWidgets extends Calendar {
                       $output .= "&nbsp;<a href=\"{$icsPage}?event=".trim($row->itemID)."\"><i class=\"k-icon-calendar\" title=\"Add to Calendar\"></i></a>";
                   }
                   $output .= "</h3>";
-                  $output .= "<span class=\"kc-event-date\">" . $eventDate." &#8226; ".date("g:i a", $row->eventStartDate)."-".date("g:i a", $row->eventEndDate)."</span><br />";
+                  $output .= "<span class=\"kc-event-date\">" . $eventDate." &#8226; ".$date->format("g:i a")."-".$dateE->format("g:i a")."</span><br />";
                   //$output .= "<span class=\"kc-event-loc\">" . trim($row->location)."</span><br />".trim($row->description);
                   $output .= "</li>";
                   $j++;
