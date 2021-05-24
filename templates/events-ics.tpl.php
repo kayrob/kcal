@@ -2,7 +2,9 @@
 /*
  * Template Name: Events ICS
  * Description: Used for downloading events into a calendar application
- * 
+ *
  */
-$cc = new CalendarController();
-$cc->addToCalendar();
+if (isset($_GET["act"]) && $_GET["act"] == "ics") :
+    $cc = new CalendarController();
+    $cc->addToCalendar();
+endif;

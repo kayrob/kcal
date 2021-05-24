@@ -1,4 +1,4 @@
-/* 
+/*
  * Mini Calendar scripts to the entire calendar.js file isn't called when it's not needed.
  */
 jQuery.curCSS = jQuery.css;
@@ -10,16 +10,16 @@ var ajaxURL = (typeof ajaxurl != "undefined")? ajaxurl : ajax_object.ajax_url;
 * @param string timestamp
 */
 var show_quick_widget_events = function(obj,timestamp){
-    
+
     jQuery('#dlgQuickView').hide();
     var key = Math.round((Math.random() + Math.random()) * 100);
-    jQuery.get(ajaxURL,{'action': 'getCalendarsQuickViewEvents', 'ran': key, 'qview':timestamp},function(data){
+    jQuery.get(ajaxURL,{'action': 'getCalendarsQuickViewEvents', 'ran': key, 'qview':timestamp},function(data) {
         jQuery('#dlgQuickView').empty();
         if (data != 'false'){
             jQuery('#dlgQuickView').html('<a class="close-btn" href="#">&#215;</a>' + data);
             jQuery("#dlgQuickView .close-btn").on("click", function(e){
                 e.preventDefault();
-                jQuery(this).parent().hide().empty(); 
+                jQuery(this).parent().hide().empty();
             });
         }
         else{
@@ -37,7 +37,7 @@ var show_quick_widget_events = function(obj,timestamp){
  * Method to advance forward or backward through the mini calendar
  * @param integer advance
  */
-var change_qv_month = function(advance){
+var change_qv_month = function(advance) {
     var key = Math.round((Math.random() + Math.random()) * 100);
     var qvStamp = jQuery("#pQVdateTime").html();
     jQuery.get(ajaxURL,{"action": "getCalendarsQuickViewCalendar" , "ran": key, "isAjax": 'y', "qvAdv":advance,"qvStamp":qvStamp},function(data){
@@ -46,17 +46,17 @@ var change_qv_month = function(advance){
             jQuery("#calendarWidgetTable").remove();
             jQuery(info[0]).insertBefore("#pQVdateTime");
             jQuery("#pQVdateTime").html(info[1]);
-            jQuery("#h4QVHeader span:eq(1)").html(info[2]);
+            jQuery("#h4QVHeader span:eq(0)").html(info[2]);
         }
     });
 }
 jQuery(document).ready(function($)
 {
     if ($("#cal-mini-widget").length == 1){
-        $("#cal-mini-widget h4 span:eq(0)").on("click", function(){
+        $("#cal-mini-widget h4 button:eq(0)").on("click", function() {
             change_qv_month(-1);
         });
-        $("#cal-mini-widget h4 span:eq(2)").on("click", function(){
+        $("#cal-mini-widget h4 button:eq(1)").on("click", function() {
             change_qv_month(1);
         });
     }

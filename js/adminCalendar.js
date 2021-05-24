@@ -47,21 +47,22 @@ var show_hide_edit_calendar_elements = function(){
 * @param string message
 * @param string id
 */
-var display_complete_message = function(message,id){
+var display_complete_message = function(message, id){
     jQuery('p.message',id).html(message).show();
 }
 /**
 * set events for calendar list on lhs menu
 * one click function for the text
 * one click function for the checkbox
+* @param object calendarObj
 */
-var set_calendar_list_events = function(){
+var set_calendar_list_events = function(calendarObj){
     if (jQuery('#leftColAdmin ul').length == 1){
         jQuery('#leftColAdmin ul li').each(function(){
             //should already have cursor pointer
             jQuery(':input',this).click(function(){
                     //filter calendar - start tuesday
-                    (jQuery(this).is(':checked')) ?add_remove_event_sources('addEventSource',jQuery(this).val()):add_remove_event_sources('removeEventSource',jQuery(this).val());
+                    (jQuery(this).is(':checked')) ?add_remove_event_sources('addEventSource',jQuery(this).val(), calendarObj):add_remove_event_sources('removeEventSource',jQuery(this).val(), calendarObj);
             });
         });
     }
@@ -92,14 +93,16 @@ var update_add_edit_select_cal = function(){
 }
 /**
 * Remove and replace calendars list on lhs menu with data returned from ajax request
+* @param object calendarObj
 * @see set_calendar_list_events()
+* @see update_add_edit_select_cal
 */
-var load_cals_list = function(){
+var load_cals_list = function(calendarObj){
     jQuery.get(ajaxurl,({'action' : 'adminListCalendars', 'request':'list'}),function(data){
         jQuery('#calsList').remove();
         jQuery('#leftColAdmin p:eq(0)').after(data);
         //add events here for checkboxes and text-data (all should have cursor:pointer)
-        set_calendar_list_events();
+        set_calendar_list_events(calendarObj);
         update_add_edit_select_cal();
     });
 }
@@ -113,13 +116,13 @@ var load_cals_list = function(){
 * @param object end
 * @param object form
 */
-var set_add_edit_date_vals = function(start,end,form){
-    var startDay = (start.getDate() < 10)?"0"+start.getDate():start.getDate();
-    var endDay = (end.getDate() < 10)?"0"+end.getDate():end.getDate();
+var set_add_edit_date_vals = function(start, end, form){
+    var startDay = (start.getDate() < 10) ? "0" + start.getDate() : start.getDate();
+    var endDay = (end.getDate() < 10) ? "0" + end.getDate() : end.getDate();
     var startHours = parseInt(start.getHours(),10);
-    var startMM = (parseInt(start.getMinutes(),10) < 10)? "0"+parseInt(start.getMinutes(),10):parseInt(start.getMinutes(),10);
-    var startTOD = (parseInt(start.getHours(),10) > 11) ? "PM" :"AM";
-    startHours = (startHours < 10)?"0"+startHours:startHours;
+    var startMM = (parseInt(start.getMinutes(),10) < 10)? "0" + parseInt(start.getMinutes(),10) : parseInt(start.getMinutes(),10);
+    var startTOD = (parseInt(start.getHours(),10) > 11) ? "PM" : "AM";
+    startHours = (startHours < 10) ? "0" + startHours : startHours;
     if (startHours > 12){
         startHours -= 12;
     }
@@ -127,19 +130,19 @@ var set_add_edit_date_vals = function(start,end,form){
         startHours = 12;
     }
     var endHours = parseInt(end.getHours(),10);
-    endHours = (endHours < 10)?"0"+endHours:endHours;
-    if (endHours > 12){
+    endHours = (endHours < 10) ? "0" + endHours : endHours;
+    if (endHours > 12) {
         endHours -= 12;
     }
-    if (endHours == 0){
+    if (endHours == 0) {
         startHours = 12;
     }
-    var endMM = (parseInt(end.getMinutes(),10) < 10) ? "0"+parseInt(end.getMinutes(),10):parseInt(end.getMinutes(),10);
+    var endMM = (parseInt(end.getMinutes(),10) < 10) ? "0" + parseInt(end.getMinutes(),10) : parseInt(end.getMinutes(),10);
     var endTOD = (parseInt(end.getHours(),10) > 11) ? "PM" : "AM";
-    var startMN = ((start.getMonth()+1) < 10)?"0"+(start.getMonth()+1):(start.getMonth()+1);
-    var endMN = ((end.getMonth()+1) < 10)?"0"+(end.getMonth()+1):(end.getMonth()+1);
-    var startDate = start.getFullYear()+'-'+startMN+'-'+startDay;
-    var endDate = end.getFullYear()+'-'+endMN+'-'+endDay;
+    var startMN = ((start.getMonth()+1) < 10) ? "0" + (start.getMonth()+1) : (start.getMonth()+1);
+    var endMN = ((end.getMonth()+1) < 10) ? "0" + (end.getMonth()+1) : (end.getMonth()+1);
+    var startDate = start.getFullYear() + '-' + startMN + '-' + startDay;
+    var endDate = end.getFullYear() + '-' + endMN + '-' + endDay;
     jQuery(':input[name=_kcal_recur_eventStartDate]',form).val(startDate);
     jQuery(':input[name=_kcal_recur_eventEndDate]',form).val(endDate);
     jQuery(":input[name=_kcal_recurStartTime]", form).val(startHours + ":" + startMM + " " + startTOD);
@@ -154,6 +157,7 @@ var toggle_edit_recur_options = function(disable){
     jQuery(':input[name=_kcal_recur_eventStartDate]','#frmEditRecurring').attr('disabled',disable);
     jQuery(':input[name=_kcal_recur_eventEndDate]','#frmEditRecurring').attr('disabled',disable);
 }
+
 /**
 * Set the field values for edit a recurring event dialog before it is opened
 * The form is reset prior to being re-opened
@@ -163,29 +167,41 @@ var toggle_edit_recur_options = function(disable){
 * @see set_add_edit_date_vals()
 */
 var open_edit_recurring_dialog = function(eventDetails){
-    jQuery('p.message','#dlgAddEditEvent').empty();
+    jQuery('p.message','#dlgEditRecurring').empty();
     document.getElementById('frmEditRecurring').reset();
     toggle_edit_recur_options(false);
+
     var form = jQuery('#frmEditRecurring');
-    jQuery(':input[name=recurrenceID]',form).val(eventDetails.recurrenceID);
+	var eventID = eventDetails.id.split('-');
+
+    jQuery(':input[name=recurrenceID]',form).val(eventID[1]);
     jQuery(':input[name=eventID]',form).val(eventDetails.id);
-    set_add_edit_date_vals(eventDetails.start,eventDetails.end,form);
+    set_add_edit_date_vals(eventDetails.start, eventDetails.end, form);
     form.show();
-    jQuery('#dlgEditRecurring h2').html('Edit Recurring Event: '+eventDetails.title);
+    jQuery('#dlgEditRecurring h2').html('Edit Recurring Event: ' + eventDetails.title);
     jQuery('#dlgEditRecurring').fadeIn();
 
 }
+/**
+ * This is from the WP Post type admin screen
+ * @param object eventDetails
+ */
 var open_edit_recurring_dialog_single = function(eventDetails){
-    jQuery('p.message','#dlgAddEditEvent').empty();
+    jQuery('p.message','#dlgEditRecurring').empty();
     var form = jQuery('#frmEditRecurring');
     jQuery(':input[name=recurrenceID]',form).val(eventDetails.recurrenceID);
     jQuery(':input[name=eventID]',form).val(eventDetails.id);
     set_add_edit_date_vals(eventDetails.start,eventDetails.end,form);
     form.show();
-    jQuery('#dlgEditRecurring h2').html('Edit Recurring Event: '+eventDetails.title);
+    jQuery('#dlgEditRecurring h2').html('Edit Recurring Event: ' + eventDetails.title);
     jQuery('#dlgEditRecurring').fadeIn();
 
 }
+/**
+ * This is from the WP Post type admin screen
+ * @see open_edit_recurring_dialog_single()
+ * @see open_delete_event_dlg_single()
+ */
 var set_single_edit_del_events = function(){
     jQuery("label.recur-edit").off("click");
     jQuery("label.del-recur").off("click");
@@ -224,7 +240,7 @@ var set_single_edit_del_events = function(){
 * @param object form
 * @see set_add_edit_date_vals()
 */
-var set_edit_form_element_vals = function(eventDetails,form){
+var set_edit_form_element_vals = function(eventDetails, form) {
     var calendarInfo = eventDetails.className.toString().split("_");
     var calendarID = calendarInfo[calendarInfo.length-1];
     jQuery(':input[name=eventTitle]',form).val(eventDetails.title);
@@ -297,6 +313,12 @@ var open_delete_event_dlg_single = function(eventDetails){
     jQuery('#dlgDeleteEvent h2').html('Delete: '+eventDetails.title);
     jQuery('#dlgDeleteEvent').fadeIn();
 }
+
+/**
+ * Called when deletion of a current event is confirmed from fullCalendar view
+ * @param object form
+ * @see set_single_edit_del_events()
+ */
 var complete_delete_recur_event = function(form){
     var recurID = jQuery(':input[name=recurrenceID]',form).val();
     jQuery("#del-recur-" + recurID).parents("li").remove();
@@ -304,115 +326,184 @@ var complete_delete_recur_event = function(form){
     jQuery(':input[name=eventID]',form).val("");
     set_single_edit_del_events();
 }
+/**
+ * Called from fullcalendar when edit for a recurring event is confirmed
+ * @param object form
+ * @see set_single_edit_del_events
+ */
 var complete_edit_recur_event = function(form){
-    var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    var recurID = jQuery(':input[name=recurrenceID]',form).val();
-    var eventID = jQuery(":input[name=eventID]", form).val();
-    var oldTime = jQuery("#edit-recur-" + recurID).parents("li").html().split("<span");
-    var startDate = new Date(jQuery(':input[name=_kcal_recur_eventStartDate]',form).val() + " " + jQuery(":input[name=_kcal_recurStartTime]", form).val());
-    var endDate = new Date(jQuery(':input[name=_kcal_recur_eventEndDate]',form).val() + " " + jQuery(":input[name=_kcal_recurEndTime]", form).val());
-    var textDate = days[startDate.getDay()] + ", " + months[startDate.getMonth()]+ " " + startDate.getDate() + ", " + startDate.getFullYear();
-    var textEndDate = days[endDate.getDay()] + ", " + months[endDate.getMonth()]+ " " + endDate.getDate() + ", " + endDate.getFullYear();
-    var textTime = (startDate.getHours() > 12 ? startDate.getHours() - 12 : startDate.getHours()) + ":" + (startDate.getMinutes() < 10 ? "0" + startDate.getMinutes() : startDate.getMinutes()) + (startDate.getHours() > 11 ? " pm" : " am");
-    var textEndTime = (endDate.getHours() > 12 ? endDate.getHours() - 12 : endDate.getHours()) + ":" + (endDate.getMinutes() < 10 ? "0" + endDate.getMinutes() : endDate.getMinutes()) + (endDate.getHours() > 11 ? " pm" : "pm");
-    if (textDate != textEndDate){
-        textDate += " " + textTime + "-" + textEndDate + " " + textEndTime;
-    }
-    else{
-        textDate += " " + textTime + "-" + textEndTime;
-    }
-    jQuery("#edit-recur-" + recurID).parents("li").html(textDate + "<span" + oldTime[1]);
-    var dataPostStart = startDate.getFullYear()+ "-" + (startDate.getMonth() < 9 ? "0" + (1+startDate.getMonth()) : 1+startDate.getMonth()) + "-" + startDate.getDate() + " " + textTime;
-    var dataPostEnd = endDate.getFullYear()+ "-" + (endDate.getMonth() < 9 ? "0" + (1+endDate.getMonth()) : 1+endDate.getMonth()) + "-" + endDate.getDate() + " " + textEndTime;
-    jQuery("#edit-recur-" + recurID).attr("data-start", dataPostStart);
-    jQuery("#edit-recur-" + recurID).attr("data-end", dataPostEnd);
-    set_single_edit_del_events();
+	var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+	var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+	var recurID = jQuery(':input[name=recurrenceID]',form).val();
+	var eventID = jQuery(":input[name=eventID]", form).val();
+	var oldTime = jQuery("#edit-recur-" + recurID).parents("li").html().split("<span");
+	var startDate = new Date(jQuery(':input[name=_kcal_recur_eventStartDate]',form).val() + " " + jQuery(":input[name=_kcal_recurStartTime]", form).val());
+	var endDate = new Date(jQuery(':input[name=_kcal_recur_eventEndDate]',form).val() + " " + jQuery(":input[name=_kcal_recurEndTime]", form).val());
+	var textDate = days[startDate.getDay()] + ", " + months[startDate.getMonth()]+ " " + startDate.getDate() + ", " + startDate.getFullYear();
+	var textEndDate = days[endDate.getDay()] + ", " + months[endDate.getMonth()]+ " " + endDate.getDate() + ", " + endDate.getFullYear();
+	var textTime;
+	var textEndTime;
+	if (startDate.getMinutes() < 10) {
+		textTime = "0" + startDate.getMinutes();
+	} else {
+		textTime = startDate.getMinutes();
+	}
+	if (startDate.getHours() > 12) {
+		textTime = startDate.getHours() - 12 + ':' + textTime + ' pm';
+	} else {
+		textTime = startDate.getHours() + ':' + textTime + ' am';
+	}
+
+	if (endDate.getMinutes() < 10) {
+		textEndTime = "0" + endDate.getMinutes();
+	} else {
+		textEndTime = endDate.getMinutes();
+	}
+	if (endDate.getHours() > 12) {
+		textEndTime = endDate.getHours() - 12 + ':' + textEndTime + ' pm';
+	} else {
+		textEndTime = endDate.getHours() + ':' + textEndTime + ' am';
+	}
+
+	if (textDate != textEndDate){
+		textDate += " " + textTime + "-" + textEndDate + " " + textEndTime;
+	}
+	else{
+		textDate += " " + textTime + "-" + textEndTime;
+	}
+	jQuery("#edit-recur-" + recurID).parents("li").html(textDate + "<span" + oldTime[1]);
+	var dataPostStart = startDate.getFullYear()+ "-" + (startDate.getMonth() < 9 ? "0" + (1+startDate.getMonth()) : 1+startDate.getMonth()) + "-" + startDate.getDate() + " " + textTime;
+	var dataPostEnd = endDate.getFullYear()+ "-" + (endDate.getMonth() < 9 ? "0" + (1+endDate.getMonth()) : 1+endDate.getMonth()) + "-" + endDate.getDate() + " " + textEndTime;
+	jQuery("#edit-recur-" + recurID).attr("data-start", dataPostStart);
+	jQuery("#edit-recur-" + recurID).attr("data-end", dataPostEnd);
+	set_single_edit_del_events();
 }
 
 /**
 * Submits an edit request when a user drags an event time, or drops an event to a new day
 * This is a blind request so the user doesn't see it
 * eventDetails fullCalendar objects, revertFunc is a callback that can be used if ajax fails, however, all events are refetched, so not used currently
-* @param object eventDetails
-* @param object reverFunc
-* @see set_edit_form_element_vals()
+* @param object eventDrop
+* @param object calendarObj
 */
-var send_drop_event = function(eventDetails,revertFunc){
+var send_drop_event = function(eventDrop, calendarObj) {
 
-    var event = eventDetails.id.toString();
+	var calEvent = eventDrop.event;
+
+    var event = calEvent.id.toString();
     var eventID = event.split("-");
     var isRecurring = (eventID.length == 2) ? true : false;
     var recurrenceID = (eventID.length == 2) ? eventID[1] : "";
+	var startStr = '';
+	var endStr = '';
+
+	if (calEvent.allDay === true) {
+		var displayStart =  calEvent.extendedProps.displayStart.toString().replace(/\s[ap]m/, ':00');
+		var displayEnd = calEvent.extendedProps.displayEnd.toString().replace(/\s[ap]m/, ':00');
+		var startTOD = displayStart.toString().split(':');
+		var endTOD = displayEnd.toString().split(':');
+
+		if (calEvent.extendedProps.displayStart.toString().match(/pm/) == 'pm') {
+			displayStart = displayStart.replace(startTOD[0], (parseInt(startTOD[0], 10) +  12) .toString() );
+		} else {
+			if (parseInt(startTOD[0], 10) < 10) {
+				displayStart = displayStart.replace(displayStart.toString().substring(0,1), '0' + startTOD[0]);
+			}
+		}
+
+		if (calEvent.extendedProps.displayEnd.toString().match(/pm/) == 'pm') {
+			displayEnd = displayEnd.replace(endTOD[0], (parseInt(endTOD[0], 10) +  12) .toString() );
+		} else {
+			if (parseInt(endTOD[0], 10) < 10) {
+				displayEnd = displayEnd.replace(displayEnd.toString().substring(0,1), '0' + endTOD[0]);
+			}
+		}
+
+		startStr = calEvent.startStr.toString() + ' ' + displayStart;
+		endStr = calEvent.startStr.toString() + ' ' + displayEnd;
+	} else {
+		startStr = calEvent.startStr.toString().replace('T', ' ');
+		startStr = startStr.substring(0, 19);
+		endStr = calEvent.endStr.toString().replace('T', ' ');
+		endStr = endStr.substring(0, 19);
+	}
+
     var params = {
-        "_kcal_dropStartDate" : eventDetails.start,
-        "_kcal_dropEndDate"   : eventDetails.end,
+        "_kcal_dropStartDate" : startStr,
+        "_kcal_dropEndDate"   : endStr,
         "eventID" : eventID[0],
         "isRecurring" : isRecurring,
         "recurrenceID" : recurrenceID
     };
+
     jQuery.get(ajaxurl + '?action=adminEditEvents&request=event&input=u',(params),function(data){
-        jQuery('#calendar').fullCalendar('refetchEvents');
+        calendarObj.refetchEvents();
     });
 }
 /**
 * this global function allows the fullcalendar defaults to be overridden by the admin functions so the same calendar code
 * can be used on the public page
+* @see open_delete_event_dlg()
+* @see open_edit_recurring_dialog()
+* @see send_drop_event()
+* @return object
 */
 var adminDefaults = function(){
-    var defaults = {
-        editable: true,
-        dayClick: function(data,allDay,jsEvent,view){
-            jQuery('#calendar td').each(function(){
-                if (jQuery(this).css('backgroundColor') != 'rgb(255, 255, 204)'){
-                    jQuery(this).css('backgroundColor','transparent');
-                }
-            });
-            if (jQuery(this).css('backgroundColor') != 'rgb(255, 255, 204)'){
-                jQuery(this).css('backgroundColor','#99cccc');
-            }
-            open_add_new_event(data,allDay,jsEvent,view,false);
-        },
-        selectable: true,
-        selectHelper: true,
-        select: function(start,end,allDay){
-            //send end date or recurrence number to open_add_new_event
-            open_add_new_event(start,allDay,{},jQuery('#calendar').fullCalendar('getView'),end);
-            jQuery('#calendar').fullCalendar('unselect');
-        },
-        dragOpacity: {
-            month: 2,
-            ''   : .5
-        },
-        eventClick: function(calEvent, jsEvent, view){
-            show_event_details(calEvent,jsEvent,view);
-            var dlg = '#dlgEventDetails';
-            jQuery('#editEvent',dlg).unbind('click');
-            jQuery('#deleteEvent',dlg).unbind('click');
-            jQuery('#deleteEvent',dlg).click(function(){
-                jQuery(dlg).fadeOut();
-                open_delete_event_dlg(calEvent);
-            });
-            if (calEvent.recurrenceID && String(calEvent.recurrenceID).match(/^\d{1,6}$/)){
-                jQuery('#editEvent',dlg).click(function(){
-                        jQuery(dlg).fadeOut();
-                        open_edit_recurring_dialog(calEvent);
-                });
-            }
-            else{
-                jQuery('#editEvent',dlg).click(function(){
-                    window.location.href = postEditURL + "&post=" + calEvent.id;
-                });
-            }
-        },
-        eventDrop: function(calEvent,dayDelta,minuteDelta,allDay,revertFunc){
-            send_drop_event(calEvent,revertFunc);
-        },
-        eventResize: function(calEvent,dayDelta,minuteDelta,allDay,revertFunc){
-            send_drop_event(calEvent,revertFunc);
-        }
-    }
-    return defaults;
+	var today = new Date();
+	var defaults = {
+		initialDate: today,
+		initialView: 'dayGridMonth',
+		editable: true,
+		businessHours: true,
+		dayMaxEvents: true, // allow "more" link when too many events
+		events: [],
+		headerToolbar: {
+			start: 'title',
+			center: 'dayGridMonth,timeGridWeek,listMonth',
+			end: 'today prev,next'
+		},
+		views: {
+			listMonth: {
+				buttonText: 'List'
+			},
+			timeGridWeek: {
+				buttonText: 'Week'
+			},
+			dayGridMonth: {
+				buttonText: 'Month'
+			},
+		},
+		selectable: true,
+		eventClick: function(eventObj){
+			var calEvent = eventObj.event;
+			show_event_details(eventObj);
+			var dlg = '#dlgEventDetails';
+			jQuery('#editEvent',dlg).unbind('click');
+			jQuery('#deleteEvent',dlg).unbind('click');
+			jQuery('#deleteEvent',dlg).click(function(){
+				jQuery(dlg).fadeOut();
+				open_delete_event_dlg(calEvent);
+			});
+			if (calEvent.extendedProps.recurrenceID && String(calEvent.extendedProps.recurrenceID).match(/^\d{1,6}$/)){
+				jQuery('#editEvent',dlg).click(function(){
+						jQuery(dlg).fadeOut();
+						open_edit_recurring_dialog(calEvent);
+				});
+			}
+			else{
+				jQuery('#editEvent',dlg).click(function(){
+					window.location.href = postEditURL + "&post=" + calEvent.id;
+				});
+			}
+		},
+		eventDrop: function(eventDropInfo){
+			send_drop_event(eventDropInfo, calendarObj);
+		},
+		eventResize: function(eventDropInfo, calendarObj){
+			send_drop_event(eventDropInfo, calendarObj);
+		}
+	}
+	return defaults;
 }
 /**
 * Submit ajax request to add a new event or edit a current one
@@ -420,20 +511,24 @@ var adminDefaults = function(){
 * @param string dialog
 * @see display_complete_message()
 */
-var save_add_edit_events = function(form,dialog){
+var save_add_edit_events = function(form, dialog, calendarObj) {
 	jQuery(form).hide();
 	jQuery('#imgEditImgLoad').show();
 	var params = jQuery(":input", form).serialize();
 	var message = (jQuery(':input[name=eventSaveType]',form).val() == 'd') ? "Your event was deleted successfully. If you did not mean to do this, you can recover your main event from the trash, or add back recurring instances from the post edit screen " : "Your events were saved successfully";
 	jQuery.get(ajaxurl + '?action=adminEditEvents&request=event&input='+jQuery(':input[name=eventSaveType]',form).val(),(params),function(data){
-            if (!data.match(/true/)){message = "There was an error saving your events:<br />"+data;}
+            if (!data.match(/true/)) {
+				message = "There was an error saving your events:<br />" + data;
+			}
             jQuery('#imgEditImgLoad').hide();
             display_complete_message(message,dialog);
-            if (jQuery('#calendar').length == 1){
-                if (data.match(/true/)){jQuery('#calendar').fullCalendar('refetchEvents');}
+            if (jQuery('#calendar').length == 1) {
+                if (data.match(/true/)) {
+					calendarObj.refetchEvents();
+				}
             }
             else{
-                if (jQuery(':input[name=eventSaveType]',form).val() == "d"){
+                if (jQuery(':input[name=eventSaveType]',form).val() == "d") {
                     complete_delete_recur_event(form);
                 }
                 else{
@@ -511,7 +606,7 @@ jQuery(document).ready(function($){
                 toggle_edit_recur_options(false);
             });
         };
-        set_calendar_list_events();
+        set_calendar_list_events(calendarObj);
         set_form_button_events();
 
         /**
@@ -521,18 +616,18 @@ jQuery(document).ready(function($){
             e.preventDefault();
             $('p.message','#dlgEditRecurring').empty();
             var message = "";
-            if ($(':input[name=eventTitle]',this).val() == ""){
+            if ($(':input[name=eventTitle]',this).val() == "") {
                 message += "Provide a title for your event<br />";
             }
-            if (!$(':input[name=_kcal_recur_eventStartDate]',this).val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
+            if (!$(':input[name=_kcal_recur_eventStartDate]',this).val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)) {
                 message += "Provide a valid starting date (YYYY-MM-DD)<br />";
             }
-            if (!$(':input[name=_kcal_recur_eventEndDate]',this).val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
+            if (!$(':input[name=_kcal_recur_eventEndDate]',this).val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)) {
                 message += "Provide a valid ending date (YYYY-MM-DD)<br />";
             }
-            if(message == ""){
+            if(message == "") {
                 toggle_edit_recur_options(false);
-                save_add_edit_events(this,'#dlgEditRecurring');
+                save_add_edit_events(this,'#dlgEditRecurring', calendarObj);
             }
             else{
                 display_complete_message(message+'<hr />','#dlgEditRecurring');
@@ -553,7 +648,7 @@ jQuery(document).ready(function($){
                 $('p.message','#dlgDeleteEvent').html('Select which instance you want to delete.');
             }
             else{
-                save_add_edit_events(this,'#dlgDeleteEvent');
+                save_add_edit_events(this,'#dlgDeleteEvent', calendarObj);
             }
             return false;
         });
@@ -561,97 +656,72 @@ jQuery(document).ready(function($){
     /**
      * From the main edit screen
      */
-    else{
-        if ($("#kcal_eventRepeat").length == 1){
-            set_single_edit_del_events();
-           /* $("label.del-recur").on("click", function(){
-                var postID = $(this).data("post");
-                var id = $(this).attr("id").split("-");
-                var recurID = (id.length == 3) ? id[2] : "";
-                var eventDetails = {
-                    title: "Recurring Event " + $("input[name=post_title]").val(),
-                    id: postID,
-                    recurrenceID : recurID
-                 };
+    else {
+		if ($("#kcal_eventRepeat").length == 1) {
+			set_single_edit_del_events();
 
-                 open_delete_event_dlg_single(eventDetails);
-             });*/
-             $('#btnCancelDeleteEvent').click(function(){
-                $('#tbRecurring','#dlgDeleteEvent').hide();
-                $(this).parents('.quickview-popup').fadeOut();
-            });
-            $("#btnDeleteEvent").on("click", function(e){
-                e.preventDefault();
-                $('p.message','#dlgDeleteEvent').empty();
-                if ($(':input[name=eventID]',"#dlgDeleteEvent").val().match(/^\d+/) == false){
-                    $("#frm_delete_event").hide();
-                    $('p.message','#dlgDeleteEvent').html('An event was not selected. Please retry');
-                }
-                else if (isNaN($(":input[name=recurrenceID]","#dlgDeleteEvent").val()) == false && $(":input[name=recurDelete]","#dlgDeleteEvent").val() == ""){
-                    $("p.message","#dlgDeleteEvent").html("Select which instance you want to delete.");
-                }
-                else{
-                    save_add_edit_events($("#frm_delete_event"),'#dlgDeleteEvent');
-                }
-                return false;
-            });
-         /*   $("label.recur-edit").on("click", function(){
-                var postID = $(this).data("post");
-                var id = $(this).attr("id").split("-");
-                var recurID = (id.length == 3) ? id[2] : "";
-                var start = new Date($(this).data("start"));
-                var end = new Date($(this).data("end"));
-                var eventDetails = {
-                    title: $("input[name=post_title]").val(),
-                    id: postID + "-" + recurID,
-                    recurrenceID : recurID,
-                    start: start,
-                    end: end
-                 };
-                 open_edit_recurring_dialog_single(eventDetails);
-             });*/
-             $('#saveRecurEvent').on("click",function(e){
-                e.preventDefault();
-                $('p.message','#dlgEditRecurring').empty();
-                var message = "";
-                if (!$(':input[name=_kcal_recur_eventStartDate]',"#frmEditRecurring").val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
-                    message += "Provide a valid starting date (YYYY-MM-DD)<br />";
-                }
-                if (!$(':input[name=_kcal_recur_eventEndDate]',"#frmEditRecurring").val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
-                    message += "Provide a valid ending date (YYYY-MM-DD)<br />";
-                }
-                if(message == ""){
-                    save_add_edit_events("#frmEditRecurring",'#dlgEditRecurring');
-                }
-                else{
-                    display_complete_message(message+'<hr />','#dlgEditRecurring');
-                }
-                return false;
-            });
-            $('#cancelEditRecurEvent').click(function(){
-                $(this).parents('.quickview-popup').fadeOut();
-            });
-        }
-    }
-    //help
-    $('#aCalInfo').on("click", function(e){
-        e.preventDefault();
-        $("#calInfo").show();
-    });
+				$('#btnCancelDeleteEvent').click(function() {
+				$('#tbRecurring','#dlgDeleteEvent').hide();
+				$(this).parents('.quickview-popup').fadeOut();
+			});
+			$("#btnDeleteEvent").on("click", function(e) {
+				e.preventDefault();
+				$('p.message','#dlgDeleteEvent').empty();
+				if ($(':input[name=eventID]',"#dlgDeleteEvent").val().match(/^\d+/) == false){
+					$("#frm_delete_event").hide();
+					$('p.message','#dlgDeleteEvent').html('An event was not selected. Please retry');
+				}
+				else if (isNaN($(":input[name=recurrenceID]","#dlgDeleteEvent").val()) == false && $(":input[name=recurDelete]","#dlgDeleteEvent").val() == ""){
+					$("p.message","#dlgDeleteEvent").html("Select which instance you want to delete.");
+				}
+				else{
+					save_add_edit_events($("#frm_delete_event"),'#dlgDeleteEvent', calendarObj);
+				}
+				return false;
+			});
 
-    /**
-    * Dialog pop-up close
-    */
-    $('.close-btn').click(function(e) {
-        e.preventDefault();
-        $(this).parent().parent().fadeOut();
-    });
+			$('#saveRecurEvent').on("click",function(e) {
+					e.preventDefault();
+					$('p.message','#dlgEditRecurring').empty();
+					var message = "";
+					if (!$(':input[name=_kcal_recur_eventStartDate]',"#frmEditRecurring").val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
+						message += "Provide a valid starting date (YYYY-MM-DD)<br />";
+					}
+					if (!$(':input[name=_kcal_recur_eventEndDate]',"#frmEditRecurring").val().match(/^20[0-9]{2}([-])(0[1-9]|1[012])([-])([012][0-9]|3[01])$/)){
+						message += "Provide a valid ending date (YYYY-MM-DD)<br />";
+					}
+					if(message == ""){
+						save_add_edit_events("#frmEditRecurring",'#dlgEditRecurring', calendarObj);
+					}
+					else{
+						display_complete_message(message+'<hr />','#dlgEditRecurring');
+					}
+					return false;
+			});
+			$('#cancelEditRecurEvent').click(function() {
+				$(this).parents('.quickview-popup').fadeOut();
+			});
+		}
+	}
+	//help
+	$('#aCalInfo').on("click", function(e) {
+		e.preventDefault();
+		$("#calInfo").show();
+	});
 
-    $(document).bind('keydown', function(e) {
-        if(e.which == 27) {
-            $('.quickview-popup').fadeOut();
-        }
-    });
+	/**
+	* Dialog pop-up close
+	*/
+	$('.close-btn').click(function(e) {
+		e.preventDefault();
+		$(this).parent().parent().fadeOut();
+	});
+
+	$(document).bind('keydown', function(e) {
+		if(e.which == 27) {
+			$('.quickview-popup').fadeOut();
+		}
+	});
 
 
     //change the active, hover and initial state icon for side navigation menu
@@ -669,13 +739,13 @@ jQuery(document).ready(function($){
         };
 
         $('.menu-icon-event').on("mouseover", function(){
-            if ($(staffNavParent).hasClass("wp-has-current-submenu") === false){
+            if ($(staffNavParent).hasClass("wp-has-current-submenu") === false) {
                 var newImgBase = "calendar_hover.png";
                 $(staffNavItem).attr("src", imgPath[0] + "img/" + newImgBase);
             }
         });
         $('.menu-icon-event').on("mouseout", function(){
-            if ($(staffNavParent).hasClass("wp-has-current-submenu") === false){
+            if ($(staffNavParent).hasClass("wp-has-current-submenu") === false) {
                 $(staffNavItem).attr("src", imgPath[0] + "img/" + imgBase);
             }
         });
@@ -686,7 +756,7 @@ jQuery(document).ready(function($){
            }
         });
 
-        if ($('.menu-icon-event').hasClass("wp-has-current-submenu")){
+        if ($('.menu-icon-event').hasClass("wp-has-current-submenu")) {
             set_active_img(imgPath[0]);
         }
     }
@@ -694,18 +764,17 @@ jQuery(document).ready(function($){
 var formField;
 var imgField;
 var restoreEditor = window.send_to_editor;
-if (jQuery("input[name='kCal_mb_nonce']").length > 0){
+if (jQuery("input[name='kCal_mb_nonce']").length > 0) {
 
-    jQuery("[id^=\"uploadimage_kcal\"]").on("click", function(e){
+    jQuery("[id^=\"uploadimage_kcal\"]").on("click", function(e) {
         var id = jQuery(this).attr("id");
         formField = id.replace("uploadimage","");
         imgField = "img" + formField;
         tb_show('', 'media-upload.php?type=image&amp;TB_iframe=true');
         window.send_to_editor = function(html) {
-            console.log(html);
             var fileURL = html.match(/http\:(s)?[^\s]*\.(png|jpg|jpeg|gif|bmp)/);
 
-            if (fileURL != 'undefined' && fileURL != null){
+            if (fileURL != 'undefined' && fileURL != null) {
                 jQuery('#' + formField).val(fileURL[0]);
                 jQuery('#' + imgField).attr('src', fileURL[0]);
             }

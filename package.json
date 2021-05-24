@@ -1,0 +1,78 @@
+{
+    "name": "fp-foundation",
+    "version": "1.0.0",
+    "description": "The foundation for FlowPress's WordPress-based projects.",
+    "main": "templates/Gulpfile.js",
+    "scripts": {
+        "lint": "sass-lint -v",
+        "lint:fix": "sass-lint-auto-fix"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/FlowPress/fp-foundation.git"
+    },
+    "keywords": [
+        "theme",
+        "wordpress"
+    ],
+    "author": "FlowPress",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/FlowPress/fp-foundation/issues"
+    },
+    "homepage": "https://github.com/FlowPress/fp-foundation#readme",
+    "devDependencies": {
+        "ansi-colors": "^3.2.4",
+        "autoprefixer": "^9.6.1",
+        "axe-core": "^3.3.2",
+        "bootstrap": "^4.3.1",
+        "brand-colors": "^2.0.1",
+        "browser-sync": "^2.26.7",
+        "caniuse-lite": "^1.0.30000989",
+        "child_process": "^1.0.2",
+        "cssnano": "^4.1.10",
+        "del": "^4.1.1",
+        "dotenv": "^8.1.0",
+        "eslint-config-wordpress": "^2.0.0",
+        "glob": "^7.1.4",
+        "gulp": "^4.0.2",
+        "gulp-changed": "^4.0.1",
+        "gulp-cheerio": "^0.6.3",
+        "gulp-concat": "^2.6.1",
+        "gulp-debug": "^4.0.0",
+        "gulp-eslint": "^5.0.0",
+        "gulp-filter": "^6.0.0",
+        "gulp-if": "^2.0.2",
+        "gulp-imagemin": "^6.1.0",
+        "gulp-notify": "^3.2.0",
+        "gulp-plumber": "^1.2.1",
+        "gulp-postcss": "^8.0.0",
+        "gulp-prompt": "^1.2.0",
+        "gulp-rename": "^1.4.0",
+        "gulp-replace": "^1.0.0",
+        "gulp-sass": "^4.0.2",
+        "gulp-sass-lint": "^1.4.0",
+        "gulp-shell": "^0.7.1",
+        "gulp-sourcemaps": "^2.6.5",
+        "gulp-svgmin": "^2.2.0",
+        "gulp-svgstore": "^7.0.1",
+        "gulp-tabify": "0.0.2",
+        "gulp-tap": "^2.0.0",
+        "gulp-task-listing": "^1.1.0",
+        "gulp-uglify": "^3.0.2",
+        "gulp-uglify-es": "^1.0.4",
+        "gulp-util": "^3.0.8",
+        "jquery": "^3.4.1",
+        "node-notifier": "^5.4.3",
+        "node-sass-once-importer": "^5.3.2",
+        "npm-sass": "^2.3.0",
+        "popper.js": "^1.15.0",
+        "postcss-pxtorem": "^4.0.1",
+        "sass-lint-auto-fix": "^0.17.0",
+        "vinyl-fs": "^3.0.3"
+    },
+    "dependencies": {
+        "gulp-px2rem-converter": "^1.5.9",
+        "gulp-wp-pot": "^2.5.0"
+    }
+}

@@ -2,9 +2,9 @@
 /*
  * Template Name: Events RSS
  * Description: Used for displaying the events RSS feed
- * 
+ *
  */
-header("Content-Type: application/rss+xml; charset=UTF-8");
-$cc = new CalendarController();
-$rss = $cc->buildCalendarsRSS();
-echo $rss;
+if (isset($_GET['calendar']) && is_numeric($_GET['calendar']) ) :
+	$cc = new CalendarController();
+	$cc->buildCalendarsRSS();
+endif;
