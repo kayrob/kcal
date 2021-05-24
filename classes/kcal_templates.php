@@ -14,13 +14,12 @@ if (!class_exists("kCalTemplates")){
 			//first check to see if this is turned on
 			$kcalOptions = get_option("kcal_settings");
 
-			if (get_post_type() == 'event') {
-				if (!isset($kcalOptions['kcal_single_template']) || (int) $kcalOptions['kcal_single_template'] == 1) {
+
+			if (!isset($kcalOptions['kcal_single_template']) || (int) $kcalOptions['kcal_single_template'] == 1) {
+				add_filter("template_include", array($this, "kCal_events_templates" ) );
+			} else {
+				if (!isset($kcalOptions['kcal_archive_template']) || (int) $kcalOptions['kcal_archive_template'] == 1) {
 					add_filter("template_include", array($this, "kCal_events_templates" ) );
-				} else {
-					if (!isset($kcalOptions['kcal_archive_template']) || (int) $kcalOptions['kcal_archive_template'] == 1) {
-						add_filter("template_include", array($this, "kCal_events_templates" ) );
-					}
 				}
 			}
 
