@@ -2,14 +2,12 @@
 
 // Fonts
 @font-face {
-	font-family: 'kcal-admin';
-	src:url('../fonts/kcal-admin.eot?cn6fd5');
-	src:url('../fonts/kcal-admin.eot?cn6fd5#iefix') format('embedded-opentype'),
-		url('../fonts/kcal-admin.ttf?cn6fd5') format('truetype'),
-		url('../fonts/kcal-admin.woff?cn6fd5') format('woff'),
-		url('../fonts/kcal-admin.svg?cn6fd5#kcal-admin') format('svg');
-	font-weight: normal;
-	font-style: normal;
+    font-family: 'kcal-admin';
+    src: url('../../fonts/kcal-admin.ttf') format('truetype'),
+        url('../../fonts/kcal-admin.woff') format('woff'),
+        url('../../fonts/kcal-admin.svg#kcal') format('svg');
+    font-weight: normal;
+    font-style: normal;
 }
 
 [class^="kicon-"],

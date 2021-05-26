@@ -163,6 +163,10 @@ if (!class_exists("kCal")){
             wp_register_style("eventsCSS", admin_url("admin-ajax.php")."?action=eventListCSS");
 			wp_register_style("kcalSingular", KCAL_HOST_URL . "dist/css/single-event.css", array(), "");
 			wp_register_style("kcalArchive", KCAL_HOST_URL . "dist/css/archive-calendar.css", array(), "");
+			wp_register_style("kcalWidgets", KCAL_HOST_URL ."dist/css/kcal-widgets.css", array(), "");
+
+			wp_register_script("kcalMiniJS", KCAL_HOST_URL ."js/mini-calendar-min.js", array("jquery"), false, true);
+			wp_register_style("calMiniCSS", KCAL_HOST_URL . "dist/css/calendar-mini.css");
 
 			if (has_shortcode(get_the_content(), 'kcal') ) {
 
@@ -176,8 +180,8 @@ if (!class_exists("kCal")){
 
             if ( is_active_widget( false, false, 'kcal-mini-widget' ) ){
 				wp_enqueue_script("kcalendar");
-                wp_enqueue_style("calMiniCSS", KCAL_HOST_URL . "/css/calendarMini-min.css");
-                wp_enqueue_script("kcalMiniJS", KCAL_HOST_URL."/js/mini-calendar-min.js", array("jquery"), false, true);
+                wp_enqueue_style("calMiniCSS");
+                wp_enqueue_script("kcalMiniJS");
                 wp_localize_script("kcalMiniJS", "ajax_object", array("ajax_url" => admin_url("admin-ajax.php")));
             }
 
@@ -187,6 +191,10 @@ if (!class_exists("kCal")){
 
 			if (is_archive('calendar') || has_shortcode(get_the_content(), 'kcalArchive') ) {
 				wp_enqueue_style("kcalArchive");
+			}
+
+			if (is_active_widget(false, false, 'filter-events-date') || is_active_widget(false, false, 'kcal-calendar-sidebar') || is_active_widget(false, false, 'kcal-list-widget')) {
+				wp_enqueue_style('kcalWidgets');
 			}
 
         }
@@ -255,8 +263,8 @@ if (!class_exists("kCal")){
                     'description'   => esc_html__( 'Appears on the calendar archive pages', 'kCal' ),
                     'before_widget' => '<aside id="%1$s" class="widget %2$s">',
                     'after_widget'  => '</aside>',
-                    'before_title'  => '<h3 class="widget-title">',
-                    'after_title'   => '</h3>'
+                    'before_title'  => '<h3 class="widget-title"><span>',
+                    'after_title'   => '</span></h3>'
             ));
             register_sidebar(array(
                     'name'          => esc_html__( 'Single Event Sidebar', 'kCal' ),
@@ -264,8 +272,8 @@ if (!class_exists("kCal")){
                     'description'   => esc_html__( 'Appears on single event page', 'kCal' ),
                     'before_widget' => '<aside id="%1$s" class="widget %2$s">',
                     'after_widget'  => '</aside>',
-                    'before_title'  => '<h3 class="widget-title">',
-                    'after_title'   => '</h3>'
+                    'before_title'  => '<h3 class="widget-title"><span>',
+                    'after_title'   => '</span></h3>'
             ));
         }
         public function buildCalendarsCSS()

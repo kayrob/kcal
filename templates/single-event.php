@@ -24,7 +24,7 @@ get_header();
 				<?php endwhile; // end of the loop. ?>
 
 		</div> <!-- /.col.grid_8_of_12 -->
-		<?php get_sidebar("kcal"); ?>
+		<?php include_once KCAL_HOST_DIR . 'templates/parts/sidebar-kcal.php'; ?>
     </div> <!-- /#primary.site-content.row -->
 
 <?php get_footer();

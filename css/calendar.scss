@@ -22,6 +22,9 @@
 			font-size: 20px;
 		}
 	}
+	.fc-view-harness {
+		background-color: white;
+	}
 	.calendar-select-wrap {
 		@media screen and (min-width: 768px) {
 			display: block;
@@ -119,6 +122,11 @@
 				color: inherit;
 				cursor: default;
 			}
+		}
+	}
+	.fc-timegrid-cols {
+		tbody {
+			display: table;
 		}
 	}
 }

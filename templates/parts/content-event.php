@@ -25,6 +25,10 @@ $eventStart = (isset($recurStart[0])) ? $recurStart[0]: $meta["_kcal_eventStartD
 $eventEnd = (isset($recurEnd)) ? $recurEnd : $meta["_kcal_eventEndDate"][0];
 $eventID = $postID;
 
+if (isset($_GET["r"]) && (int)$_GET["r"] > 0){
+	$eventID .= '-' . $_GET["r"];
+}
+
 $eventLink = $meta["_kcal_eventURL"][0];
 
 $dateTime->setTimestamp($eventStart);
@@ -92,7 +96,7 @@ $calText = get_option('calendar_text_'.$calendar[0]->term_id);
 
   <?php if (!empty($calendar[0])): ?>
 	<div>
-		<a target='_blank' class='alt kcal-ics' href='<?php echo trailingslashit(home_url());?>?act=ics&calID=<?php echo $calendar[0]->term_id;?>&eID=<?php echo $postID;?>' aria-label="<?php _e('Download event to calendar. Opens in a new window', 'kcal'); ?>">
+		<a target='_blank' class='alt kcal-ics' href='<?php echo trailingslashit(home_url());?>?act=ics&calID=<?php echo $calendar[0]->term_id;?>&eID=<?php echo $eventID;?>' aria-label="<?php _e('Download event to calendar. Opens in a new window', 'kcal'); ?>">
 		<span class='k-icon-calendar' role="decoration"></span>
 		<span class='text'><?php _e('Add to Calendar', 'kcal');?></span>
 		</a>

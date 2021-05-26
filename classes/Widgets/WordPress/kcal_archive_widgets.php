@@ -11,25 +11,8 @@ if (!class_exists('kCalfilterEventsDate')) {
 			$control_ops = array();
 			parent::__construct( 'filter-events-date', __('K-Cal Events Year Month/Year Widget', 'kcal'), $widget_ops, $control_ops );
 
-			$pURL = trailingslashit(plugins_url()."/k-cal");
-			wp_enqueue_script("kcal-widgets-js", $pURL ."js/mini-calendar.js", array("jquery"), "1.0", true);
-			wp_enqueue_style("kcal-widgets-css", $pURL ."css/kcal-widgets.css", array(), '2.2.6');
-			wp_localize_script("kcal-widgets-js", "ajax_object", array("ajax_url" => admin_url("admin-ajax.php")));
-			$this->scripts['kcal-widgets-js'] = false;
-			$this->scripts['kcal-widgets-css'] = false;
-
-			add_action('wp_print_footer_scripts', array($this, 'kcal_remove_scripts'));
 		}
 
-		public function kcal_remove_scripts() {
-			foreach ( $this->scripts as $script => $keep ) {
-				if ( false === $keep ) {
-					// It seems dequeue is not "powerful" enough, you really need to deregister it
-					wp_deregister_script( $script );
-				}
-			}
-
-		}
 		public function widget($args, $instance)
 		{
 
@@ -37,17 +20,24 @@ if (!class_exists('kCalfilterEventsDate')) {
 
 			$catID = get_query_var("calendar");
 			$term = get_term_by("slug", $catID, "calendar");
+
 			if (false !== $term && class_exists("CalendarWidgets")){
 				$cw = new CalendarWidgets();
-				$date = new DateTime('', new DateTimeZone(get_option('gmt_offset')));
-				$start = mktime(0,0,0, $date->format('Y'), $date->format('n'), '01');
+				$dTZ = new DateTimeZone(get_option('gmt_offset'));
+				$date = new DateTime('now', $dTZ);
+				$start = $date->getTimestamp();
 				$date->setTimestamp(strtotime($date->format('Y').'-'.$date->format('n'). '-01 + 1 year'));
-				$end = $date->getTimestamp();
-				$events = $cw->retrieve_all_events($start, $end, $term->term_id);
+				$events = $cw->retrieve_all_events($start, $date->getTimestamp(), $term->term_id);
 
 				$res = array();
 				if (!empty($events)){
-					foreach($events as $event){
+					foreach($events as $event) {
+						try {
+							$eTZ = new DateTimeZone($event->timezone);
+						} catch (\Exception $e) {
+							$eTZ = $dTZ;
+						}
+						$date->setTimezone($eTZ);
 						$date->setTimestamp($event->eventStartDate);
 						$eventMonth = $date->format('F');
 						$eventYear = $date->format('Y');
@@ -66,18 +56,20 @@ if (!class_exists('kCalfilterEventsDate')) {
 					$this->scripts['kcal-widgets-css'] = true;
 
 					ksort($res);
-					$navOutput = $args["before_title"];
+					$navOutput = '<div class="filter-events-wrapper">';
+					$navOutput .= $args["before_title"];
 					$navOutput .= __("Filter Events", 'kcal');
 					$navOutput .= $args["after_title"];
 					$navOutput .= "<ul>";
 					$catLink = get_category_link($term);
 					foreach($res as $row){
-						$navOutput .= "<li><a href=\"{$catLink}?fm=".$row["fm"]."&fy=".$row["fy"]."\">" .$row["fm"]." ".$row["fy"]. "<span class=\"fa fa-chevron-right\"></span></a>";
+						$navOutput .= "<li><a href=\"{$catLink}?fm=".$row["fm"]."&fy=".$row["fy"]."\"><span class=\"link-text\">" .$row["fm"]." ".$row["fy"]. "</span><span class=\"kcal-chevron-right\"></span></a>";
 						$navOutput .= "</li>";
 					}
 
-					$navOutput .= "<li><a href=\"{$catLink}\">" . __('Clear Filter', 'kcal') . "<span class=\"fa fa-chevron-right\"></span></a>";
+					$navOutput .= "<li class=\"clear-filter\"><a href=\"{$catLink}\"><span class=\"link-text\">" . __('Clear Filter', 'kcal') . "</span><span class=\"kcal-x\">&times;</span></a>";
 					$navOutput .= "</ul>";
+					$navOutput .= '</div>';
 				}
 			}
 			if (!empty($navOutput)){
@@ -94,21 +86,6 @@ if (!class_exists('kCalfilterEventsDate')) {
 			$widget_ops = array( 'classname' => 'kcal-archive-widget kcal-calendars-list-view', 'description' => __('A widget that displays links to other calendars in a sidebar', 'kCalCalendarSidebar') );
 			$control_ops = array();
 			parent::__construct( 'kcal-calendar-sidebar', __('K-Cal Sidebar List', 'kCalCalendarSidebar'), $widget_ops, $control_ops );
-
-			$pURL = trailingslashit(plugins_url()."/k-cal");
-			wp_enqueue_style("kcal-widgets-css", $pURL ."css/kcal-widgets.css", array(), '2.2.6');
-			$this->scripts['kcal-widgets-css'] = false;
-
-			add_action('wp_print_footer_scripts', array($this, 'kcal_remove_scripts'));
-		}
-
-		public function kcal_remove_scripts() {
-			foreach ( $this->scripts as $script => $keep ) {
-				if ( false === $keep ) {
-					wp_deregister_script( $script );
-				}
-			}
-
 		}
 
 		public function widget($args, $instance)
@@ -130,18 +107,20 @@ if (!class_exists('kCalfilterEventsDate')) {
 				$this->scripts['kcal-widgets-js'] = true;
 				$this->scripts['kcal-widgets-css'] = true;
 
-				$navOutput = $args["before_title"];
+				$navOutput = '<div class="list-calendars-wrapper">';
+				$navOutput .= $args["before_title"];
 				$navOutput .= (isset($instance["title"]) ? $instance["title"] : __('Calendars', 'kcal') );
 				$navOutput .= $args["after_title"];
 				$navOutput .= "<ul>";
 				foreach($allTerms as $calTerm){
 					if (is_single() || !isset($term->term_id) || $calTerm->term_id != $term->term_id){
 						$catLink = get_category_link($calTerm);
-						$navOutput .= "<li><a href=\"{$catLink}\">" .$calTerm->name. "<span class=\"fa fa-chevron-right\"></span></a>";
+						$navOutput .= "<li><a href=\"{$catLink}\"><span class=\"link-text\">" .$calTerm->name. "</span><span class=\"kcal-chevron-right\"></span></a>";
 						$navOutput .= "</li>";
 					}
 				}
 				$navOutput .= "</ul>";
+				$navOutput .= '</div>';
 			}
 			if (!empty($navOutput)){
 				echo $args["before_widget"];

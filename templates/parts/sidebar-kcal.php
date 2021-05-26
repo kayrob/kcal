@@ -5,7 +5,7 @@
  * @package kCal
  */
 ?>
-<div class="col grid_4_of_12">
+<div class="grid_4_of_12">
     <div id="secondary" class="widget-area" role="complementary">
             <?php
             do_action( 'before_sidebar' );

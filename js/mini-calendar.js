@@ -46,17 +46,17 @@ var change_qv_month = function(advance) {
             jQuery("#calendarWidgetTable").remove();
             jQuery(info[0]).insertBefore("#pQVdateTime");
             jQuery("#pQVdateTime").html(info[1]);
-            jQuery("#h4QVHeader span:eq(0)").html(info[2]);
+            jQuery("#h4QVHeader .header-text").html(info[2]);
         }
     });
 }
 jQuery(document).ready(function($)
 {
-    if ($("#cal-mini-widget").length == 1){
-        $("#cal-mini-widget h4 button:eq(0)").on("click", function() {
+    if ($("#kcal-mini-widget").length == 1){
+        $("#kcal-mini-widget h4 button:eq(0)").on("click", function() {
             change_qv_month(-1);
         });
-        $("#cal-mini-widget h4 button:eq(1)").on("click", function() {
+        $("#kcal-mini-widget h4 button:eq(1)").on("click", function() {
             change_qv_month(1);
         });
     }

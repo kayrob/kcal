@@ -14,14 +14,6 @@ if (!class_exists('kCalQuickView')) {
 			$control_ops = array();
 			parent::__construct("kcal-mini-widget", __("K-Cal Mini View Widget", "kCalQuickView"), $widget_ops, $control_ops);
 
-			$pURL = trailingslashit(plugins_url()."/k-cal");
-			wp_enqueue_script("kcal-widgets-js", $pURL ."js/mini-calendar.js", array("jquery"), "1.0", true);
-			wp_enqueue_style("kcal-widgets-css", $pURL ."css/kcal-widgets.css", array(), '2.2.6');
-			wp_localize_script("kcal-widgets-js", "ajax_object", array("ajax_url" => admin_url("admin-ajax.php")));
-			$this->scripts['kcal-widgets-js'] = false;
-			$this->scripts['kcal-widgets-css'] = false;
-
-			add_action('wp_print_footer_scripts', array($this, 'kcal_remove_scripts'));
 		}
 
 		public function widget($args, $instance)
@@ -32,28 +24,15 @@ if (!class_exists('kCalQuickView')) {
 
 			$date = new \DateTime('now', new \DateTimeZone(get_option('gmt_offset')));
 
-			$this->scripts['kcal-widgets-js'] = true;
-			$this->scripts['kcal-widgets-css'] = true;
-
 			$cal = new CalendarWidgets();
 
-			$output = "<div class=\"kcal-mini-widget widget\" id=\"cal-mini-widget\">";
+			$output = "<div class=\"kcal-mini-widget widget\" id=\"kcal-mini-widget\">";
 			$output .= "<div id=\"dlgQuickView\"></div>";
-			$output .= "<h4 id=\"h4QVHeader\"><button aria-label='view previous month' class='no-style'>&#8249;</button><span>" .$date->format('F Y')."</span><button aria-label='View next month' class='no-style'>&#8250;</button></h4>";
+			$output .= "<h4 id=\"h4QVHeader\" class=\"kcal-mini-header\"><button aria-label='" . __('View previous month', 'kcal') . "' class='no-style'><span class='kcal-chevron-left'></span></button><span class=\"header-text\">" .$date->format('F Y')."</span><button aria-label='" . __('View next month', 'kcal') . "' class='no-style'><span class='kcal-chevron-right'></span></button></h4>";
 			$output .= $cal->quick_view_calendar(false, false, $calsSelected);
 			$output .= "<p id=\"pQVdateTime\">" . $date->format('Y-m-d') ."</p>";
 			$output .= "</div>";
 			echo $output;
-		}
-
-		public function kcal_remove_scripts() {
-			foreach ( $this->scripts as $script => $keep ) {
-				if ( false === $keep ) {
-					// It seems dequeue is not "powerful" enough, you really need to deregister it
-					wp_deregister_script( $script );
-				}
-			}
-
 		}
 
 		public function update($new_instance, $old_instance)

@@ -1,6 +1,29 @@
 @import 'partials/fonts';
 .archive {
 	&.tax-calendar {
+		.widget-area {
+			margin-left: auto;
+			max-width: 400px;
+			width: 90%;
+			@media screen and (min-width: 768px) {
+				margin-right: unset;
+			}
+		}
+		.row {
+			margin-left: 0;
+			margin-right: 0;
+		}
+		.grid_8_of_12 {
+			@media screen and (min-width: 768px) {
+				width: 66%;
+			}
+		}
+		.grid_4_of_12 {
+			padding: 40px 0;
+			@media screen and (min-width: 768px) {
+				width: 34%;
+			}
+		}
 		h2 {
 			a {
 				font-size: inherit;

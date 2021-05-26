@@ -49,3 +49,34 @@
 		content: "\e903";
 	}
 }
+
+[class*="kcal-chevron"] {
+	border-radius: 25px;
+	background-color: white;
+	display: inline-block;
+	height: 25px;
+	text-align: center;
+	width: 25px;
+	&::before {
+		border: 2px solid #454545;
+		border-bottom: 0;
+		border-left: 0;
+		border-radius: 1px;
+		content: '';
+		display: inline-block;
+		height: 10px;
+		text-indent: -9999;
+		width: 10px;
+	}
+	&[class*="chevron-right"] {
+		&::before {
+			transform: rotate(45deg);
+		}
+	}
+	&[class*="chevron-left"] {
+		&::before {
+			transform: rotate(-135deg);
+		}
+	}
+}
+

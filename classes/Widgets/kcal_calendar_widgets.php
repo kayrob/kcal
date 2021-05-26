@@ -175,14 +175,14 @@ if (!class_exists('CalendarWidgets') && class_exists('Calendar')) {
 			$eList = array();
 			$filtered = array_values($res);
 			foreach($filtered as $index => $eItem){
-			if ($eItem->eventStartDate >= $whereDate){
+				if ($eItem->eventStartDate >= $whereDate){
 					if (!isset($eList[$eItem->eventStartDate])){
 						$eList[$eItem->eventStartDate] = $eItem;
 					}
 					else{
 						$eList[($index) + $eItem->eventStartDate] = $eItem;
 					}
-			}
+				}
 			}
 			ksort($eList);
 			return $eList;
@@ -311,6 +311,7 @@ if (!class_exists('CalendarWidgets') && class_exists('Calendar')) {
 							if (array_key_exists($row->calendarID, $calendars) && $row->eventStartDate >= $today) {
 								if ($j < $limit) {
 									$link = (!empty($row->detailsAlternateURL))? trim($row->detailsAlternateURL): get_permalink($row->ID);
+
 									$events[$row->ID] = array(
 										"id"            => trim($row->ID),
 										"start"         => $row->eventStartDate,
@@ -469,20 +470,22 @@ if (!class_exists('CalendarWidgets') && class_exists('Calendar')) {
 				}
 
 				if ($res !== false) {
+
 					$timezone = "UTC".get_option("gmt_offset");
 					$offset = abs(get_option("gmt_offset"));
 					$output = "BEGIN:VCALENDAR\nVERSION:2.0\n";
 					$output .= "BEGIN:VTIMEZONE\n";
-					$output .= "TZID:".$timezone."\n";
+					$output .= "TZID:" . $timezone . "\n";
 					$output .= "END:VTIMEZONE\n";
 					$blog_title = get_bloginfo("name", "raw" );
 					foreach($res as $row) {
 						if (isset($calendars[$row->calendarID])) {
 							$postID = explode("-",$row->ID);
 							if (isset($postID[0])){
+								$eventTZ = get_post_meta($postID[0], '_kcal_timezone', true);
 
 								try {
-									$timezoneObj = new \DateTimeZone($row->timezone);
+									$timezoneObj = new \DateTimeZone($eventTZ);
 								} catch (exception $e) {
 									$timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
 								}
@@ -555,8 +558,8 @@ if (!class_exists('CalendarWidgets') && class_exists('Calendar')) {
 					$timezoneObj = new \DateTimeZone(get_option('gmt_offset'));
 				}
 
-				$dateS = new \DateTime('', $timezoneObj);
-				$dateE = new \DateTime('', $timezoneObj);
+				$dateS = new \DateTime('now', $timezoneObj);
+				$dateE = new \DateTime('now', $timezoneObj);
 
 				$dateSel = mktime(0, 0, 0, date('n', $timestamp), date('j', $timestamp), date('Y', $timestamp) );
 				$endDateStamp = $dateSel + (60*60*30);
@@ -569,23 +572,49 @@ if (!class_exists('CalendarWidgets') && class_exists('Calendar')) {
 					$calSettings = array_keys($calendars);
 				}
 
+				$dateFormat = get_option('date_format');
+				$timeFormat = get_option('time_format');
+
 				if ($res != false) {
-					$output = "<dl>";
+					$output = "";
 					foreach($res as $row) {
+
 						if (isset($calendars[$row->calendarID]) && in_array($row->calendarID, $calSettings)) {
+
+							$eventID = explode('-', $row->ID);
+
+							try {
+								$timezoneObj = new \DateTimeZone($row->timezone);
+							} catch (exception $e) {}
+							$dateS->setTimezone($timezoneObj);
+							$dateE->setTimezone($timezoneObj);
+
 							$dateS->setTimestamp($row->eventStartDate);
 							$dateE->setTimestamp($row->eventEndDate);
-							$eventDate = ($dateS->format('Y-m-d') == $dateS->format('Y-m-d') ) ? $dateS->format('M d') : $dateS->format('M d') . "-" . $dateE->format('M d');
-							$link = get_permalink($row->ID);
 
-							$eventTitle = (!empty($link)) ? "<a href=$link>".trim($row->post_title)."</a>" : trim($row->post_title) ;
+							if (date('Y-m-d', $dateSel) == $dateS->format('Y-m-d')) {
+								$eventDate = ($dateS->format('Y-m-d') == $dateS->format('Y-m-d') ) ? $dateS->format('M d') : $dateS->format('M d') . "-" . $dateE->format('M d');
 
-							$output .= "<dt style=\"background-color:".$calendars[trim($row->calendarID)]["colour"].";color:".$calendars[trim($row->calendarID)]["text"]."\">".$eventTitle."</dt>";
-							$output .= "<dd style=\"background-color:".$calendars[trim($row->calendarID)]["colour"].";color:".$calendars[trim($row->calendarID)]["text"]."\">$eventDate &#8226; ".$dateS->format("g:i a") . "-" . $dateE->format("g:i a")."<br />".trim($row->description)."</dd>";
+								$link = get_permalink($eventID[0]);
+
+								if (isset($eventID[1])) {
+									$link .= '?r=' . $eventID[1];
+								}
+
+								$eventTitle = (!empty($link)) ? "<a href=\"{$link}\" style=\"background-color:" . $calendars[trim($row->calendarID)]["colour"] .";color:" . $calendars[trim($row->calendarID)]["text"]  . "\">" . trim($row->post_title) . "</a>" : trim($row->post_title) ;
+
+								$output .= "<dt><span>" . $eventTitle . "</span></dt>";
+								$output .= "<dd>{$eventDate} &#8226; " . $dateS->format($timeFormat) . "-" . $dateE->format($timeFormat)  . "</dd>";
+							}
 						}
 					}
-					$output .= "</dl>";
+					if (!empty($output)) {
+						$output = '<dl>' . $output . '</dl>';
+					}
 				}
+			}
+			if (empty($output)) {
+				$output = 'false';
 			}
 			return $output;
 		}

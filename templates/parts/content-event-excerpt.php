@@ -91,7 +91,7 @@ $postClass = (0 == $postIter ) ? 'no-border' : '';
 
 <?php if (!empty($calendar)): ?>
 <div>
-    <a target='_blank' class='alt kcal-ics' href='<?php echo get_term_link($calendar);?>?act=ics&calID=<?php echo $calendar->term_id;?>&eID=<?php echo $postID;?>'>
+    <a target='_blank' class='alt kcal-ics' href='<?php echo get_term_link($calendar);?>?act=ics&calID=<?php echo $calendar->term_id;?>&eID=<?php echo $eventID;?>'>
     <span class='k-icon-calendar'></span>
     <span class='text'><?php _e('Add to Calendar', 'kcal'); ?></span>
   </a>

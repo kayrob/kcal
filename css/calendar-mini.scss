@@ -1,0 +1,136 @@
+@import 'partials/fonts';
+
+#pQVdateTime {
+    display: none;
+}
+
+
+.kcal-mini-widget {
+	background-color: white;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 400px;
+	width: 100%;
+	button {
+		background: transparent;
+		border-radius: 20px;
+		cursor: pointer;
+		display: inline-block;
+		height: 25px;
+		padding: 0;
+		text-align: center;
+		width: 25px;
+		span {
+			&.kcal-chevron-left,
+			&.kcal-chevron-right {
+				line-height: 1.4;
+			}
+			&.kcal-chevron-left {
+				&::before {
+					margin-left: 3px;
+				}
+			}
+			&.kcal-chevron-right {
+				&::before {
+					margin-left: -1px;
+				}
+			}
+		}
+		&:hover {
+			span {
+				background-color: inherit;
+				color: inherit;
+			}
+		}
+	}
+	h4 {
+		margin: 5px 0;
+		padding: 10px;
+		text-align: center;
+		span {
+			display: inline-block;
+			&.header-text {
+				width: calc(100% - 60px);
+			}
+		}
+	}
+	table {
+		tbody {
+			display: table;
+		}
+		td,
+		th {
+			padding: 6px 3px;
+			text-align: center;
+			width: 14.28%;
+		}
+		.tdCalSpacer {
+			background-color: #f6f6f6;
+			color: #757575;
+		}
+		.calToday {
+			background-color: #220e10;
+			color: #ccc;
+		}
+		.tdQvEvents {
+			background-color: mintcream;
+			cursor: pointer;
+			color: #e6402a;
+			font-weight: bold;
+		}
+	}
+}
+
+#dlgQuickView {
+	background-color: #fff;
+	box-shadow: 1px #f0f0f0;
+    display: none;
+    height: auto;
+    margin: 0;
+    position: absolute;;
+	width: 300px;
+	z-index: 1;
+	.close-btn {
+		background-color: #333;
+		border-radius: 20px;
+		color: #fff;
+		font-size: 28px;
+		height: 30px;
+		line-height: 1.1;
+		position: absolute;
+		right: -8px;
+		top: -10px;
+		text-align: center;
+		text-decoration: none;
+		width: 30px;
+	}
+	dl {
+		margin: 0;
+		padding: 15px;
+		&:nth-child(even){
+			background-color: #f2f2f2;
+		}
+	}
+	dt {
+		border-bottom: 0;
+		margin: 0;
+		padding: 0;
+		position: relative;
+		span {
+			display: inline-block;
+			width: 100%;
+		}
+		a {
+			padding: 0 5px;
+		}
+	}
+	dd {
+		border-bottom: 1px solid #e8e8e8;
+		margin: 0 0 10px;
+		padding: 0 5px 10px;
+		&:last-child {
+			margin-bottom: 0;
+			padding-bottom: 0;
+		}
+	}
+}

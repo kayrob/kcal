@@ -41,13 +41,14 @@ else :
 	get_header();
 ?>
 
-	<div class='primary content-area'>
-		<main id='main' class='site-main'>
-		<div class='col-lg-12 first'>
+	<div class="primary content-area" role="main">
+		<header>
+			<h1><?php single_term_title( __('Upcoming Events: ', 'kcal'), true) ; ?></h1>
+		</header>
 		<?php if ( have_posts() && isset($eventsPaged[($paged - 1)]) && !empty($eventsPaged[($paged - 1)]) ) : ?>
 
-			<div class='entry-content standard-content-wrapper clearfix'>
-			<div class='col-lg-8 first' >
+			<div class="site-content row">
+			<div class="grid_8_of_12" >
 
 			<?php if (!empty($htmlDescription)) : ?>
 				<div class="archive-meta"><?php echo $htmlDescription;?></div>
@@ -78,14 +79,12 @@ else :
 
 			<?php kcalShortcodes::calendar_pagination( 'nav-below' );  ?>
 			</div><!--end col-lg-8-->
-			<?php get_sidebar() ;?>
+			<?php include_once KCAL_HOST_DIR . 'templates/parts/sidebar-kcal.php';?>
 			</div><!--end entry-content/standard content wrapper -->
 
 			<?php else : ?>
 				<?php get_template_part( 'template-parts/content', 'none' ); ?>
 			<?php endif ?>
-		</div> <!-- end col-lg-12 -->
-		</main><!-- #main -->
 	</div><!-- .primary -->
 
 <?php get_footer(); ?>
