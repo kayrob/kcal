@@ -14,15 +14,27 @@ if (!class_exists("kCalTemplates")){
 			//first check to see if this is turned on
 			$kcalOptions = get_option("kcal_settings");
 
-
+			//first check to see if this is turned on
 			if (!isset($kcalOptions['kcal_single_template']) || (int) $kcalOptions['kcal_single_template'] == 1) {
 				add_filter("template_include", array($this, "kCal_events_templates" ) );
+				add_action("wp_enqueue_scripts", array($this, "kCal_template_scripts"));
 			} else {
 				if (!isset($kcalOptions['kcal_archive_template']) || (int) $kcalOptions['kcal_archive_template'] == 1) {
 					add_filter("template_include", array($this, "kCal_events_templates" ) );
+					add_action("wp_enqueue_scripts", array($this, "kCal_template_scripts"));
 				}
 			}
 
+		}
+
+		public function kCal_template_scripts() {
+			if (is_singular('event') || has_shortcode(get_the_content(), 'kcalSingle') ) {
+				wp_enqueue_style("kcalSingular");
+			}
+
+			if (is_archive('calendar') || has_shortcode(get_the_content(), 'kcalArchive') ) {
+				wp_enqueue_style("kcalArchive");
+			}
 		}
 
 		public function kCal_templates_init() {

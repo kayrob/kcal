@@ -185,14 +185,6 @@ if (!class_exists("kCal")){
                 wp_localize_script("kcalMiniJS", "ajax_object", array("ajax_url" => admin_url("admin-ajax.php")));
             }
 
-			if (is_singular('event') || has_shortcode(get_the_content(), 'kcalSingle') ) {
-				wp_enqueue_style("kcalSingular");
-			}
-
-			if (is_archive('calendar') || has_shortcode(get_the_content(), 'kcalArchive') ) {
-				wp_enqueue_style("kcalArchive");
-			}
-
 			if (is_active_widget(false, false, 'filter-events-date') || is_active_widget(false, false, 'kcal-calendar-sidebar') || is_active_widget(false, false, 'kcal-list-widget')) {
 				wp_enqueue_style('kcalWidgets');
 			}
