@@ -8,7 +8,7 @@ if (is_admin())
     $cal = new AdminCalendar();
 
     echo '<style type="text/css">';
-    $cal->buildCalendarCSS();
+    $cal->build_calendar_css();
     echo '</style>';
 
 ?>

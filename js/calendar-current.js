@@ -21,7 +21,7 @@
 
  //this filter is just for halton
  var add_remove_event_sources = function(action,calendarID){
-	 jQuery('#calendar').fullCalendar(action,ajaxURL + '?action=getCalendarsEventsAjax&calendar=' + calendarID);
+	 jQuery('#calendar').fullCalendar(action,ajaxURL + '?action=get_calendars_events_ajax&calendar=' + calendarID);
  };
 
  /**
@@ -134,7 +134,7 @@
 			 calendars.push(jQuery(this).val());
 		 }
 	 });
-	 jQuery.get(ajaxURL + '?action=getCalendarsFullCalendar&qview=list',{'view[]':calendars,'timestamp':jQuery('#plistTimeStamp').html()},function(data){
+	 jQuery.get(ajaxURL + '?action=get_calendars_fullcalendar&qview=list',{'view[]':calendars,'timestamp':jQuery('#plistTimeStamp').html()},function(data){
 		 data = (!data.match(/false/)) ? data : "";
 		 jQuery('#eventsWidget').html(data);
 	 });
@@ -151,7 +151,7 @@
 			 calendars.push(jQuery(this).val());
 		 }
 	 });
-	 jQuery.get(ajaxURL + '?action=getCalendarsFullCalendar&qview=list',{'view[]':calendars,'cmmd':action,'timestamp':jQuery('#plistTimeStamp').html()},function(data){
+	 jQuery.get(ajaxURL + '?action=get_calendars_fullcalendar&qview=list',{'view[]':calendars,'cmmd':action,'timestamp':jQuery('#plistTimeStamp').html()},function(data){
 		 jQuery('#eventsWidget').html(data);
 		 var monthNames = new Array("January","February","March","April","May","June","July","August","September","October","November","December");
 		 var date = new Date((parseInt(jQuery('#plistTimeStamp').html(), 10)*1000) + (60*60*4*1000));

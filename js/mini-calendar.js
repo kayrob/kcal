@@ -13,7 +13,7 @@ var show_quick_widget_events = function(obj,timestamp){
 
     jQuery('#dlgQuickView').hide();
     var key = Math.round((Math.random() + Math.random()) * 100);
-    jQuery.get(ajaxURL,{'action': 'getCalendarsQuickViewEvents', 'ran': key, 'qview':timestamp},function(data) {
+    jQuery.get(ajaxURL,{'action': 'get_calendars_quick_view_events', 'ran': key, 'qview':timestamp},function(data) {
         jQuery('#dlgQuickView').empty();
         if (data != 'false'){
             jQuery('#dlgQuickView').html('<a class="close-btn" href="#">&#215;</a>' + data);
@@ -40,7 +40,7 @@ var show_quick_widget_events = function(obj,timestamp){
 var change_qv_month = function(advance) {
     var key = Math.round((Math.random() + Math.random()) * 100);
     var qvStamp = jQuery("#pQVdateTime").html();
-    jQuery.get(ajaxURL,{"action": "getCalendarsQuickViewCalendar" , "ran": key, "isAjax": 'y', "qvAdv":advance,"qvStamp":qvStamp},function(data){
+    jQuery.get(ajaxURL,{"action": "get_calendars_quick_view_calendar" , "ran": key, "isAjax": 'y', "qvAdv":advance,"qvStamp":qvStamp},function(data){
         if (data != false){
             var info = data.split("~");
             jQuery("#calendarWidgetTable").remove();

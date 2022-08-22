@@ -4,82 +4,81 @@
  *
  * @link https://developer.wordpress.org/themes/basics/template-hierarchy/#single-post
  *
- * @package fp
+ * @package kcal
  */
-if (isset($_GET['act']) && $_GET['act'] == 'ics'):
-    $cc = new CalendarController();
-    $cc->addToCalendar();
 
+if ( isset( $_GET['act'] ) && 'ics' === $_GET['act'] ) : //phpcs:ignore
+	$cc = new CalendarController();
+	$cc->add_to_calendar();
 else :
 
-
 	global $wp_query;
-	$cw = new CalendarWidgets();
-	$term = get_term_by('slug', get_query_var('calendar'), 'calendar');
-	$customFilter = array();
+	$cw            = new CalendarWidgets();
+	$the_term      = get_term_by( 'slug', get_query_var( 'calendar' ), 'calendar' );
+	$custom_filter = array();
 
-	$paged = (isset($_GET['pg'])) ? $_GET['pg'] : 1;
-	if ($paged == 0 || empty($paged)){
-		$paged = 1;
-	}
+	$the_page = ( isset( $_GET['pg'] ) ) ? $_GET['pg'] : 1; //phpcs:ignore
+	if ( 0 === (int) $the_page || empty( $the_page ) ) :
+		$the_page = 1;
+	endif;
 
-	$data = $cw->upcoming_events_archive_filter($paged, $customFilter);
+	$data = $cw->upcoming_events_archive_filter( $the_page, $custom_filter );
 
-	$eventsPaged = array();
-	if (!empty($data) && is_array($data)) {
+	$events_paged = array();
+	if ( ! empty( $data ) && is_array( $data ) ) :
 
-		$eventsPaged = (count($data) > 10) ? array_chunk($data, 10, true) : array($data);
+		$events_paged = ( 10 < count( $data ) ) ? array_chunk( $data, 10, true ) : array( $data );
 
-		$wp_query->post_count = count($data);
-		$wp_query->max_num_pages = ceil(count($data)/10);
+		$wp_query->post_count    = count( $data );
+		$wp_query->max_num_pages = ceil( count( $data ) / 10 );
 
-	}
+	endif;
 
-	$numPosts = $wp_query->post_count;
-	$htmlDescription = stripslashes(get_option( 'calendar_description_' . $term->term_id));
+	$num_posts        = $wp_query->post_count;
+	$html_description = stripslashes( get_option( 'calendar_description_' . $the_term->term_id ) );
 
 	get_header();
-?>
+	?>
 
 	<div class="primary content-area" role="main">
 		<header>
-			<h1><?php single_term_title( __('Upcoming Events: ', 'kcal'), true) ; ?></h1>
+			<h1><?php single_term_title( __( 'Upcoming Events: ', 'kcal' ), true ); ?></h1>
 		</header>
-		<?php if ( have_posts() && isset($eventsPaged[($paged - 1)]) && !empty($eventsPaged[($paged - 1)]) ) : ?>
+		<?php if ( have_posts() && isset( $events_paged[ ( $the_page - 1 ) ] ) && ! empty( $events_paged[ ( $the_page - 1 ) ] ) ) : ?>
 
 			<div class="site-content row">
 			<div class="grid_8_of_12" >
 
-			<?php if (!empty($htmlDescription)) : ?>
-				<div class="archive-meta"><?php echo $htmlDescription;?></div>
+			<?php if ( ! empty( $html_description ) ) : ?>
+				<div class="archive-meta"><?php echo wp_kses( $html_description, 'post' ); ?></div>
 			<?php endif; ?>
 
 			<?php $p = 0; ?>
 			<?php
-				global $post;
-				foreach($eventsPaged[($paged - 1)] as $eventID => $eventData) :
-					$postID = explode('-', $eventID);
-					$post = get_post($postID[0]);
-					setup_postdata($post);
-					set_query_var('eventStart', $eventData['start']);
-					set_query_var('eventEnd', $eventData['end']);
-					set_query_var('eventID', $eventID);
-					set_query_var('num_results', $numPosts );
-					set_query_var('post_iter', $p);
+			global $post;
+			foreach ( $events_paged[ ( $the_page - 1 ) ] as $event_id => $event_data ) :
+				$the_post_id = explode( '-', $event_id );
+				$post        = get_post( $the_post_id[0] ); //phpcs:ignore
+				setup_postdata( $post );
+				set_query_var( 'eventStart', $event_data['start'] );
+				set_query_var( 'eventEnd', $event_data['end'] );
+				set_query_var( 'event_id', $event_id );
+				set_query_var( 'num_results', $num_posts );
+				set_query_var( 'post_iter', $p );
 
-					include KCAL_HOST_DIR . 'templates/parts/content-event-excerpt.php';
+				include KCAL_HOST_DIR . 'templates/parts/content-event-excerpt.php';
 
-					$p++;
-					if ($p == 10) :
-						break;
-					endif;
-				endforeach;
-				wp_reset_postdata();
-		?>
+				$p++;
+				if ( 10 === $p ) :
+					break;
+				endif;
+			endforeach;
+			wp_reset_postdata();
+			?>
 
-			<?php kcalShortcodes::calendar_pagination( 'nav-below' );  ?>
+			<?php kcalShortcodes::calendar_pagination( 'nav-below' ); ?>
 			</div><!--end col-lg-8-->
-			<?php include_once KCAL_HOST_DIR . 'templates/parts/sidebar-kcal.php';?>
+			<?php include_once KCAL_HOST_DIR . 'templates/parts/sidebar-kcal.php'; ?>
 			</div><!--end entry-content/standard content wrapper -->
 
 			<?php else : ?>
@@ -87,5 +86,6 @@ else :
 			<?php endif ?>
 	</div><!-- .primary -->
 
-<?php get_footer(); ?>
-<?php endif;
+	<?php
+	get_footer();
+endif;
