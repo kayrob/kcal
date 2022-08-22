@@ -384,8 +384,8 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 
 				}
 				echo '</ol>';
-				include_once KCAL_HOST_DIR . '/views/Apps/delete_recur_single.php';
-				include_once KCAL_HOST_DIR . '/views/Apps/edit_recurring_single.php';
+				include_once KCAL_HOST_DIR . '/views/Apps/delete-recur-single.php';
+				include_once KCAL_HOST_DIR . '/views/Apps/edit-recurring-single.php';
 			}
 		}
 		/**
