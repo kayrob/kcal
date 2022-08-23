@@ -1,13 +1,13 @@
-=== k-Cal ===
+# kcal
 Contributors: karenlaansoo
 Tags: calendar, recurring events
 Requires at least: 5.1
-Tested up to: 5.7.1
+Tested up to: 6.0
 Requires PHP: 7.2
-Stable tag: 2.3
+Stable tag: 3.0.1
 
 
-=== Description ===
+## Description
 
 A calendar plugin that uses fullcalendar as a base. Can used with pre-built widgets or with custom modules.
 
@@ -17,7 +17,7 @@ A calendar plugin that uses fullcalendar as a base. Can used with pre-built widg
 4. Import events from rss (bulk)  or ics file
 5. Export to .ICS
 
-=== Attributions ===
+## Attributions
 Calendar icon created by Icon Depot from the noun project
 RSS Icon created by Centis Menant from the noun project
 
