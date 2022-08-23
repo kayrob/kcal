@@ -1,5 +1,5 @@
 # kcal
-- Contributors: karenlaansoo
+- Contributors: kayrob[https://github.com/kayrob]
 - Tags: calendar, recurring events
 - Requires at least: 5.1
 - Tested up to: 6.0
