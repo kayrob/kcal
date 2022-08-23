@@ -1,10 +1,10 @@
 # kcal
-Contributors: karenlaansoo
-Tags: calendar, recurring events
-Requires at least: 5.1
-Tested up to: 6.0
-Requires PHP: 7.2
-Stable tag: 3.0.1
+- Contributors: karenlaansoo
+- Tags: calendar, recurring events
+- Requires at least: 5.1
+- Tested up to: 6.0
+- Requires PHP: 7.2
+- Stable tag: 3.0.1
 
 
 ## Description
