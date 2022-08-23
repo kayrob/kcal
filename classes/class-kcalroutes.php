@@ -34,7 +34,7 @@ if ( ! class_exists( 'kCalRoutes' ) ) {
 				add_action( 'wp_ajax_adminListCalendars', array( $this, 'admin_list_calendars' ) );
 				add_action( 'wp_ajax_adminCalendarStyle', array( $this, 'admin_calendar_style' ) );
 				add_action( 'wp_ajax_adminAutoTags', array( $this, 'admin_auto_tags' ) );
-				add_action( 'wp_ajax_getCalendarsAjax', array( $this, 'getCalendarsAjax' ) );
+				add_action( 'wp_ajax_getCalendarsAjax', array( $this, 'get_calendars_ajax_route' ) );
 				add_action( 'wp_ajax_getCalendarsEventsAjax', array( $this, 'get_calendars_events_ajax_route' ) );
 				add_action( 'wp_ajax_get_calendars_quick_view_events', array( $this, 'get_calendars_quick_view_events' ) );
 				add_action( 'wp_ajax_get_calendars_quick_view_calendar', array( $this, 'get_calendars_quick_view_calendar' ) );

@@ -311,7 +311,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			* echo "<input type=\"text\" name=\"_kcal_locationMap\" id=\"_kcal_locationMap\" value=\"".$map."\" style=\"width: 80%\"/>";
 			* echo "<input type=\"button\" class=\"button-primary\" value=\"Upload Image\" id=\"uploadimage_kcal_locationMap\" /><br />";
 			* if (!empty($map)){
-			* 	echo "<img src=\"".  $map."\" alt=\"\" style=\"height:auto;width: 100px\" id=\"img_kcal_locationMap\"/><br />";
+			*   echo "<img src=\"".  $map."\" alt=\"\" style=\"height:auto;width: 100px\" id=\"img_kcal_locationMap\"/><br />";
 			* }
 			* echo "</p>";
 			*/
@@ -378,7 +378,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					echo "<li{$liclass}>"; //phpcs:ignore
 					echo $display; //phpcs:ignore
 					echo '<span class="recurrence-controls"><label id="edit-recur-' . (int) $meta_id . '" data-post="' . (int) $post->ID . '" data-start="' . esc_attr( $data_start ) . '" data-end="' . esc_attr( $data_end ) . '" title="' . esc_attr__( 'Edit Date', 'kcal' ) . '" class="recur-edit"><span class="ki kicon-pencil2"></span></label>
-							<label id="del-recur-' . (int) $meta_id . '" data-post="' . (int) $post->ID . '" title="' . esc_attr__( 'Delete Date', 'kcal' ) . ' class="del-recur"><span class="ki kicon-bin"></span></label></span>';
+							<label id="del-recur-' . (int) $meta_id . '" data-post="' . (int) $post->ID . '" title="' . esc_attr__( 'Delete Date', 'kcal' ) . '" class="del-recur"><span class="ki kicon-bin"></span></label></span>';
 
 					echo '</li>';
 
@@ -951,7 +951,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$cals_list .= '<input type="checkbox" style="margin-right:5px;" id="calendarInfo' . (int) $row->itemID .'" name="calendarInfo[]"' . $checked .' value = "' . (int) $row->itemID . '"/>'; //phpcs:ignore
 					$cals_list .= '<label for="calendarInfo' . (int) $row->itemID . '">' . esc_attr( $row->calendarName ) . '</label>'; //phpcs:ignore
 					$cals_list .= '</div>';
-					$cals_lsit .= '</li>'; // add onclick event.
+					$cals_list .= '</li>'; // add onclick event.
 				}
 				$cals_list .= '</ul>';
 			}

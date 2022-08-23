@@ -5,7 +5,7 @@
  * @package kcal
  */
 
-if ( is_admin() ) {
+if ( is_admin() ) :
 	$months   = array(
 		'01' => 'Jan',
 		'02' => 'Feb',
@@ -44,26 +44,26 @@ if ( is_admin() ) {
 	?>
 
 <div id="adminCalendarWrap">
-<!--start section of dialog boxes -->
-<!--create a new calendar-->
+	<!--start section of dialog boxes -->
+	<!--create a new calendar-->
 
-	<?php
-	include_once __DIR__ . '/event-details.php';
-	include_once __DIR__ . '/delete-event.php';
-	include_once __DIR__ . '/edit-recurring-event.php';
-	?>
-<!--end section of dialog boxes -->
-<div id="leftColAdmin">
-	<p><?php esc_attr_e( 'Current Calendars:', 'kcal' ); ?></p>
-	<?php echo wp_kses( $cal->display_calendar_list_admin(), 'post' ); ?>
-	<a id="calendar-new" value="<?php esc_attr_e( 'Create New Calendar', 'kcal' ); ?>" href="<?php echo esc_url( admin_url() ); ?>edit-tags.php?taxonomy=calendar&post_type=event"><?php esc_attr_e( 'Create New Calendar', 'kcal' ); ?></a>
-</div>
-<div id="centreCol">
-	<div id="calendarTitle"><h2 class="fc-header-title"></h2></div>
+		<?php
 
-	<!--calendar div must remain empty for fullCalendar.js to fill-->
-	<div id="calendar"></div>
-</div>
+		include_once __DIR__ . '/delete-event.php';
+		include_once __DIR__ . '/edit-recurring-event.php';
+		?>
+	<!--end section of dialog boxes -->
+	<div id="leftColAdmin">
+		<p><?php esc_attr_e( 'Current Calendars:', 'kcal' ); ?></p>
+		<?php echo wp_kses( $cal->display_calendar_list_admin(), 'post' ); ?>
+		<a id="calendar-new" value="<?php esc_attr_e( 'Create New Calendar', 'kcal' ); ?>" href="<?php echo esc_url( admin_url() ); ?>edit-tags.php?taxonomy=calendar&post_type=event"><?php esc_attr_e( 'Create New Calendar', 'kcal' ); ?></a>
+	</div>
+	<div id="centreCol">
+		<div id="calendarTitle"><h2 class="fc-header-title"></h2></div>
+
+		<!--calendar div must remain empty for fullCalendar.js to fill-->
+		<div id="calendar"></div>
+	</div>
 </div>
 	<?php
-}
+endif;

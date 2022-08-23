@@ -164,7 +164,7 @@ if ( ! class_exists( 'Calendar' ) ) {
 			$recur_style = ( ! empty( $recurrence ) ) ? '' : 'style="display:none"';
 			// Content for the dialog box.
 			ob_start();
-			$ouput = '
+			$output = '
 		<table id="tblEventDetails">
 		<tr id="tr_allDay" style="display:none"><td colspan="2">' . $all_day . '</td></tr>
 		<tr><td><strong>From:</strong></td><td id="tddate_start">' . $start . '</td></tr>
@@ -177,9 +177,10 @@ if ( ! class_exists( 'Calendar' ) ) {
 				preg_match( '/^([0-9]{1,6})(_)?([0-9]{1,6})?$/', $event_id, $matches );
 				$add_event_param = ( isset( $matches[1] ) ) ? $matches[1] : '';
 
-				$ouput .= '<p id="pAddEvent"><a href="' . esc_url( trailingslashit( home_url() ) ) . '?act=ics&eID' . (int) $add_event_param . '&cal_id" aria-label="' . esc_attr__( 'Opens in a new window', 'kcal' ) . ' target="_blank">' . esc_attr__( 'Add to My Calendar', 'kcal' ) . '</a></p>';
+				$output .= '<p id="pAddEvent"><a href="' . esc_url( trailingslashit( home_url() ) ) . '?act=ics&eID' . (int) $add_event_param . '&cal_id" aria-label="' . esc_attr__( 'Opens in a new window', 'kcal' ) . ' target="_blank">' . esc_attr__( 'Add to My Calendar', 'kcal' ) . '</a></p>';
 			}
-			ob_get_contents( $ouput );
+			echo wp_kses( $output, 'post' );
+			ob_get_contents();
 			ob_end_clean();
 		}
 		/**
