@@ -2,9 +2,9 @@
 - Contributors: @kayrob
 - Tags: calendar, recurring events
 - Requires at least: 5.1
-- Tested up to: 6.0
+- Tested up to: 6.1.1
 - Requires PHP: 7.2
-- Stable tag: 3.0.1
+- Stable tag: 3.0.2
 
 
 ## Description
@@ -22,3 +22,8 @@ Calendar icon created by Icon Depot from the noun project
 RSS Icon created by Centis Menant from the noun project
 
 There two companion plugins: Scheduler and course registration
+
+## Changelog
+
+- v3.0.2 (January 2023)
+	- Fix display for events by timzone and daylight/standard time

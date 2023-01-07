@@ -98,7 +98,7 @@ if ( ! class_exists( 'kCalQuickView' ) ) {
 
 			$cals_selected = $instance['quickView_calendars'];
 			?>
-			<p>Select Calendars:</p>
+			<p><?php esc_attr_e( 'Select Calendars:', 'kcal' ); ?></p>
 			<?php
 			if ( ! empty( $calendars ) ) {
 				foreach ( $calendars as $cal_id => $nfo ) {

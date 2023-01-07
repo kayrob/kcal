@@ -306,15 +306,6 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			$map      = get_post_meta( $post->ID, '_kcal_locationMap', true );
 			echo '<p><label for="_kcal_location">' . esc_attr__( 'Location Details', 'kcal' ) . '</label><br />';
 			echo '<input name="_kcal_location" id="_kcal_location" value="' . esc_attr( $location ) . '" style="width: 100%;max-width: 400px"></p>';
-			/**
-			* echo "<p><label for=\"_kcal_locationMap\">".__('Map Image', 'kcal')."</label><br />";
-			* echo "<input type=\"text\" name=\"_kcal_locationMap\" id=\"_kcal_locationMap\" value=\"".$map."\" style=\"width: 80%\"/>";
-			* echo "<input type=\"button\" class=\"button-primary\" value=\"Upload Image\" id=\"uploadimage_kcal_locationMap\" /><br />";
-			* if (!empty($map)){
-			*   echo "<img src=\"".  $map."\" alt=\"\" style=\"height:auto;width: 100px\" id=\"img_kcal_locationMap\"/><br />";
-			* }
-			* echo "</p>";
-			*/
 		}
 		/**
 		 * Event repeat metabox
@@ -323,7 +314,8 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 		 */
 		public function kcal_mb_event_repeat( $post ) {
 			$recurrence_type = get_post_meta( $post->ID, '_kcal_recurrenceType', true );
-			$recurrence_end  = get_post_meta( $post->ID, '_kcal_recurrence_end', true );
+			$recurrence_end  = get_post_meta( $post->ID, '_kcal_recurrenceEnd', true );
+
 			if ( is_null( $recurrence_end ) || 'null' === strtolower( $recurrence_end ) ) {
 				$recurrence_end = '';
 			}
@@ -349,10 +341,14 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 
 			if ( ! empty( $recurrence_dates ) ) {
 
-				$timezone = get_post_meta( $post->ID, '_kcal_timezone', true );
+				$timezone  = get_post_meta( $post->ID, '_kcal_timezone', true );
+				$event_dst = get_post_meta( $post->ID, '_kcal_dst', true );
+
 				if ( empty( $timezone ) || false === $timezone ) {
 					$timezone = get_option( 'gmt_offset' );
 				}
+
+				$today = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
 
 				echo '<p><strong>' . esc_attr__( 'Recurrence Dates', 'kcal' ) . '</strong></p>';
 				echo '<ol>';
@@ -366,6 +362,18 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$start_date->setTimestamp( $start_time[0] );
 					$end_date->setTimestamp( $end_time );
 
+					if ( (int) $today->format( 'I' ) !== (int) $start_date->format( 'I' ) ) {
+						if ( 0 === (int) $today->format( 'I' ) ) {
+							// Today is standard time. Set the display back one hour if recur is in DST.
+							$start_date->setTimestamp( $start_time[0] - ( 60 * 60 ) );
+							$end_date->setTimestamp( $end_time - ( 60 * 60 ) );
+						} else {
+							// Today is in DST. Set the display forward one hour if recur is in Standard.
+							$start_date->setTimestamp( $start_time[0] + ( 60 * 60 ) );
+							$end_date->setTimestamp( $end_time + ( 60 * 60 ) );
+						}
+					}
+
 					$display = $start_date->format( 'D, M j, Y' );
 					if ( $end_date->format( 'Y-m-d' ) !== $start_date->format( 'Y-m-d' ) ) {
 						$display .= ' ' . $start_date->format( 'g:i a' ) . ' - ' . $end_date->format( 'D, M j g:i a' );
@@ -376,7 +384,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$data_start = $start_date->format( 'Y-m-d h:i:s A' );
 					$data_end   = $end_date->format( 'Y-m-d h:i:s A' );
 					echo "<li{$liclass}>"; //phpcs:ignore
-					echo $display; //phpcs:ignore
+					echo '<span class="recur-time-display">' . $display . '</span>'; //phpcs:ignore
 					echo '<span class="recurrence-controls"><label id="edit-recur-' . (int) $meta_id . '" data-post="' . (int) $post->ID . '" data-start="' . esc_attr( $data_start ) . '" data-end="' . esc_attr( $data_end ) . '" title="' . esc_attr__( 'Edit Date', 'kcal' ) . '" class="recur-edit"><span class="ki kicon-pencil2"></span></label>
 							<label id="del-recur-' . (int) $meta_id . '" data-post="' . (int) $post->ID . '" title="' . esc_attr__( 'Delete Date', 'kcal' ) . '" class="del-recur"><span class="ki kicon-bin"></span></label></span>';
 
@@ -454,7 +462,6 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 				'_kcal_locationMap'        => ( isset( $_POST['_kcal_locationMap'] ) ? $_POST['_kcal_locationMap'] : '' ), //phpcs:ignore
 				'_kcal_timezone'           => ( isset( $_POST['_kcal_timezone'] ) ? $_POST['_kcal_timezone'] : get_option( 'gmt_offset' ) ), //phpcs:ignore
 				'_kcal_allDay'             => ( isset( $_POST['_kcal_allDay'] ) ? '1' : '0' ),
-
 			);
 
 			if ( ! isset( $_POST['_kcal_allDay'] ) ) {
@@ -613,7 +620,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			$events = array();
 
 			if ( preg_match( '/^[0-9]{1,6}$/', $post_id, $matches ) ) {
-				$new_dates = new \DateTime( 'now', new DateTimeZone( $timezone ) );
+				$new_dates  = new \DateTime( 'now', new DateTimeZone( $timezone ) );
 
 				( ! empty( $recur_end ) ) ? $new_dates->setTimestamp( strtotime( $recur_end->format( 'Y-m-d' ) . ' ' . $first_event_start->format( 'g:i a' ) ) ) : $new_dates->setTimestamp( mktime( 0, 0, 0, 12, 31, date( 'Y' ) ) ); //phpcs:ignore
 
@@ -638,8 +645,11 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 							} elseif ( date( 'w', $next_month_start_time ) < $day_of_week_event_start ) { //phpcs:ignore
 								$new_day_of_week_start = ( 1 + ( $day_of_week_event_start - date( 'w', $next_month_start_time ) ) ); //phpcs:ignore
 							}
-							$new_day_of_week_start              += ( $week_num_start * 7 - 7 );
-							$events[ -1 + $m ]['eventStartDate'] = mktime( 0, 0, 0, date( 'm', $next_month_start_time ), $new_day_of_week_start, date( 'Y', $next_month_start_time ) ); //phpcs:ignore
+							$new_day_of_week_start += ( $week_num_start * 7 - 7 );
+							$recur_timestamp        = mktime( 0, 0, 0, date( 'm', $next_month_start_time ), $new_day_of_week_start, date( 'Y', $next_month_start_time ) ); //phpcs:ignore
+							$new_dates->setTimestamp( $recur_timestamp );
+
+							$events[ -1 + $m ]['eventStartDate'] = '';
 							$events[ -1 + $m ]['eventEndDate']   = $events[ -1 + $m ]['eventStartDate'] + ( $first_event_end_time - $first_event_start_time ); //phpcs:ignore
 						}
 					}
@@ -862,9 +872,10 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 		public function update_recurring_events( $post ) {
 			$valid_data = __( 'Events could not be updated . ', 'kcal' );
 			global $wpdb;
-			if ( isset( $post['recurrenceID'] ) && isset( $post['eventID'] ) && preg_match( "/^(\d+)(\-{$post['recurrenceID']})$/", trim( $post['eventID'] ), $matches ) && preg_match( '/^\d{1, }$/', trim( $post['recurrenceID'] ), $match ) ) {
-				if ( is_admin() && current_user_can( 'edit_events', $matches[1] ) ) {
-					$post['eventID']              = $matches[1];
+			if ( isset( $post['recurrenceID'] ) && isset( $post['eventID'] ) && strstr( $post['eventID'], $post['recurrenceID'] ) ) {
+				list( $event_id, $recur_id ) = explode( '-', $post['eventID'] );
+				if ( is_admin() && current_user_can( 'edit_events', $event_id ) ) {
+					$post['eventID']              = $event_id;
 					$post['_kcal_eventStartTime'] = $post['_kcal_recurStartTime'];
 					$post['_kcal_eventEndTime']   = $post['_kcal_recurEndTime'];
 					$post['_kcal_eventStartDate'] = $post['_kcal_recur_eventStartDate'];
@@ -881,7 +892,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 									$post['recurrenceID']
 								)
 							);
-							if ( ! is_null( $meta_res ) || ! empty( $meta_res ) || false !== $meta_res ) {
+							if ( is_string( $meta_res ) ) {
 								$old_meta = unserialize( $meta_res ); //phpcs:ignore
 								$new_meta = array(
 									$start_date_time => array(

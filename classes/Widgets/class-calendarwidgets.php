@@ -150,12 +150,29 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 
 						$recurrence        = ( isset( $event_meta['_kcal_recurrenceType'][0] ) ) ? $event_meta['_kcal_recurrenceType'][0] : 'None';
 						$event->recurrence = $recurrence;
+						$timezone          = ( isset( $event_meta['_kcal_timezone'] ) ) ? $event_meta['_kcal_timezone'][0] : get_option( 'gmt_offset' );
+						$today             = new \DateTime( 'now', new \DateTimezone( $timezone ) );
 
 						if ( isset( $event_meta['_kcal_recurrenceEnd'][0] ) && 'Null' !== $event_meta['_kcal_recurrenceEnd'][0] && ! empty( $event_meta['_kcal_recurrenceEnd'][0] ) ) {
 							foreach ( $event_meta['_kcal_recurrenceDate'] as $r_date ) {
 								$recur_date                 = unserialize( $r_date ); //phpcs:ignore
 								$start_time                 = array_keys( $recur_date );
 								list( $end_time, $meta_id ) = array_values( $recur_date[ $start_time[0] ] );
+
+								$recur_dt = new \DateTime( 'now', new \DateTimezone( $timezone ) );
+								$recur_dt->setTimestamp( $start_time[0] );
+
+								if ( (int) $today->format( 'I' ) !== (int) $recur_dt->format( 'I' ) ) {
+									if ( 0 === (int) $today->format( 'I' ) ) {
+										// Today is standard time. Set the display back one hour if recur is in DST.
+										$start_time[0] -= ( 60 * 60 );
+										$end_time      -= ( 60 * 60 );
+									} else {
+										// Today is in DST. Set the display forward one hour if recur is in Standard.
+										$start_time[0] += ( 60 * 60 );
+										$end_time      += ( 60 * 60 );
+									}
+								}
 
 								$recur = array();
 								foreach ( $event as $key => $value ) {
@@ -171,7 +188,7 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 								$recur['eventEndDate']        = $end_time;
 								$recur['ID']                  = $recur_id;
 								$recur['metaID']              = $meta_id;
-								$recur['timezone']            = ( isset( $event_meta['_kcal_timezone'] ) ) ? $event_meta['_kcal_timezone'][0] : get_option( 'gmt_offset' );
+								$recur['timezone']            = $timezone;
 								$res[ $recur_id ]             = json_decode( json_encode( $recur ) ); //phpcs:ignore
 							}
 						}

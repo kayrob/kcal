@@ -371,7 +371,8 @@ var complete_edit_recur_event = function(form){
 	else{
 		textDate += " " + textTime + "-" + textEndTime;
 	}
-	jQuery("#edit-recur-" + recurID).parents("li").html(textDate + "<span" + oldTime[1]);
+	var par_li = jQuery("#edit-recur-" + recurID).parents("li");
+	jQuery('.recur-time-display', par_li).html(textDate);
 	var dataPostStart = startDate.getFullYear()+ "-" + (startDate.getMonth() < 9 ? "0" + (1+startDate.getMonth()) : 1+startDate.getMonth()) + "-" + startDate.getDate() + " " + textTime;
 	var dataPostEnd = endDate.getFullYear()+ "-" + (endDate.getMonth() < 9 ? "0" + (1+endDate.getMonth()) : 1+endDate.getMonth()) + "-" + endDate.getDate() + " " + textEndTime;
 	jQuery("#edit-recur-" + recurID).attr("data-start", dataPostStart);

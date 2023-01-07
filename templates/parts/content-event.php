@@ -19,6 +19,8 @@ endif;
 $date_time = new \DateTime();
 $date_time->setTimezone( new DateTimeZone( $meta['_kcal_timezone'][0] ) );
 
+$today_dst = $date_time->format( 'I' );
+
 $date_format_option = get_option( 'date_format' );
 $time_format_option = get_option( 'time_format' );
 
@@ -32,11 +34,33 @@ endif;
 
 $event_link = $meta['_kcal_eventURL'][0];
 
-$date_time->setTimestamp( $event_start );
+// Start Date.
+if ( (int) $today_dst !== (int) $date_time->format( 'I' ) ) {
+	if ( 0 === (int) $today_dst ) {
+		// Today is standard time. Set the display back one hour if event is in DST.
+		$date_time->setTimestamp( $event_start - ( 60 * 60 ) );
+	} else {
+		// Today is in DST. Set the display forward one hour if event is in Standard.
+		$date_time->setTimestamp( $event_start - ( 60 * 60 ) );
+	}
+} else {
+	$date_time->setTimestamp( $event_start );
+}
 $event_start_date = $date_time->format( $date_format_option );
 $event_start_time = $date_time->format( $time_format_option );
 
-$date_time->setTimestamp( $event_end );
+// End date.
+if ( (int) $today_dst !== (int) $date_time->format( 'I' ) ) {
+	if ( 0 === (int) $today_dst ) {
+		// Today is standard time. Set the display back one hour if event is in DST.
+		$date_time->setTimestamp( $event_end + ( 60 * 60 ) );
+	} else {
+		// Today is in DST. Set the display forward one hour if event is in Standard.
+		$date_time->setTimestamp( $event_end + ( 60 * 60 ) );
+	}
+} else {
+	$date_time->setTimestamp( $event_end );
+}
 $event_end_date = $date_time->format( $date_format_option );
 $event_end_time = $date_time->format( $time_format_option );
 
