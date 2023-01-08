@@ -385,7 +385,6 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 				$end   = strtotime( $_GET['fm'] . ' '. date( 't', $start ) . ', ' . $_GET['fy'] . ' +7days' ); //phpcs:ignore
 			}
 			$data = ( isset( $the_term->term_id ) ) ? $this->upcoming_events_widget( $limit, $the_term->term_id, $start, $end, false, $custom_query ) : $this->upcoming_events_widget( $limit, false, $start, $end, false, $custom_query );
-
 			$filtered = array();
 			if ( ! empty( $data ) ) {
 				foreach ( $data as $event_id => $event ) {

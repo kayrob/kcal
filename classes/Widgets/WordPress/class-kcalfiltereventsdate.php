@@ -43,7 +43,7 @@ if ( ! class_exists( 'KCalfilterEventsDate' ) ) {
 			extract( $args ); //phpcs:ignore
 
 			$cat_id   = get_query_var( 'calendar' );
-			$the_term = get_the_term_by( 'slug', $cat_id, 'calendar' );
+			$the_term = get_term_by( 'slug', $cat_id, 'calendar' );
 
 			if ( false !== $the_term && class_exists( 'CalendarWidgets' ) ) {
 				$cw            = new CalendarWidgets();
@@ -96,6 +96,8 @@ if ( ! class_exists( 'KCalfilterEventsDate' ) ) {
 					$nav_output .= "<li class=\"clear-filter\"><a href=\"{$cat_link}\"><span class=\"link-text\">" . __( 'Clear Filter', 'kcal' ) . '</span><span class="kcal-x">&times;</span></a>';
 					$nav_output .= '</ul>';
 					$nav_output .= '</div>';
+
+					$nav_output = apply_filters( 'kcal_sidebar_html', $nav_output, 'filtereventsdate', __( 'Filter Events', 'kcal' ) );
 				}
 			}
 			if ( ! empty( $nav_output ) ) {

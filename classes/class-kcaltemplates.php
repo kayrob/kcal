@@ -77,13 +77,15 @@ if ( ! class_exists( 'KCalTemplates' ) ) {
 		 */
 		public function kcal_locate_template( $template_name, $template_path = '', $default_path = '' ) {
 
-			// Set variable to search in woocommerce-plugin-templates folder of theme.
-			if ( ! $template_path ) {
-				$template_path = 'templates/';
+			if ( empty( $template_path ) ) {
+				$template_path = trailingslashit( get_stylesheet_directory() );
+				if ( is_dir( $template_path . 'templates' ) ) {
+					$template_path .= 'templates/';
+				}
 			}
 
 			// Set default plugin templates path.
-			if ( ! $default_path ) {
+			if ( empty( $default_path ) ) {
 				$default_path = KCAL_HOST_DIR . 'templates/'; // Path to the template folder.
 			}
 
@@ -113,18 +115,23 @@ if ( ! class_exists( 'KCalTemplates' ) ) {
 		 * @return string $template is the final templat file to use
 		 */
 		public function kcal_events_templates( $template ) {
-			$find = array();
-			$file = '';
+			$find         = array();
+			$file         = '';
+			$query_object = get_queried_object();
 
 			if ( is_singular( 'event' ) ) {
 				$file = 'single-event.php';
-			} elseif ( is_archive( 'calendar' ) ) {
+				if ( ! empty( $file ) ) {
+					if ( file_exists( $this->kcal_locate_template( $file ) ) ) {
+						$template = $this->kcal_locate_template( $file );
+					}
+				}
+			} elseif ( is_archive() && isset( $query_object->taxonomy ) && 'calendar' === $query_object->taxonomy ) {
 				$file = 'taxonomy-calendar.php';
-			}
-
-			if ( ! empty( $file ) ) {
-				if ( file_exists( $this->kcal_locate_template( $file ) ) ) {
-					$template = $this->kcal_locate_template( $file );
+				if ( ! empty( $file ) ) {
+					if ( file_exists( $this->kcal_locate_template( $file ) ) ) {
+						$template = $this->kcal_locate_template( $file );
+					}
 				}
 			}
 

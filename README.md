@@ -27,3 +27,4 @@ There two companion plugins: Scheduler and course registration
 
 - v3.0.2 (January 2023)
 	- Fix display for events by timzone and daylight/standard time
+	- Fix locate template and pagination

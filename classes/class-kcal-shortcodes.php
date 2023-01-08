@@ -104,7 +104,7 @@ if ( ! class_exists( 'Kcal_Shortcodes' ) ) {
 						array(
 							'base'               => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
 							'format'             => 'page/%#%',
-							'current'            => max( 1, get_query_var( 'paged' ) ),
+							'current'            => max( 1, get_query_var( 'page' ) ),
 							'total'              => $wp_query->max_num_pages,
 							'type'               => 'list',
 							'prev_text'          => wp_kses(
@@ -129,6 +129,14 @@ if ( ! class_exists( 'Kcal_Shortcodes' ) ) {
 
 					$paginate_links = preg_replace( '/<span class=\"screen-reader-text\">([A-Za-z\s]+)<\/span>\s(\d+)<\/span>/', '$2</span>', $paginate_links );
 					$paginate_links = preg_replace( '/\s*page-numbers/', '', $paginate_links );
+
+					if ( is_archive() ) {
+						$qv = get_queried_object();
+						if ( isset( $qv->taxonomy ) && 'calendar' === $qv->taxonomy ) {
+							$paginate_links = str_replace( '/page/', '?pg=', $links );
+							$paginate_links = str_replace( '/paged/', '?pg=', $links );
+						}
+					}
 
 					echo $paginate_links; //phpcs:ignore
 				}

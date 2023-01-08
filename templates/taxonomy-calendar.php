@@ -13,8 +13,9 @@ if ( isset( $_GET['act'] ) && 'ics' === $_GET['act'] ) : //phpcs:ignore
 else :
 
 	global $wp_query;
+	$the_term_id   = get_query_var( 'calendar' );
 	$cw            = new CalendarWidgets();
-	$the_term      = get_term_by( 'slug', get_query_var( 'calendar' ), 'calendar' );
+	$the_term      = get_term_by( 'slug', $the_term_i, 'calendar' );
 	$custom_filter = array();
 
 	$the_page = ( isset( $_GET['pg'] ) ) ? $_GET['pg'] : 1; //phpcs:ignore
@@ -35,7 +36,7 @@ else :
 	endif;
 
 	$num_posts        = $wp_query->post_count;
-	$html_description = stripslashes( get_option( 'calendar_description_' . $the_term->term_id ) );
+	$html_description = stripslashes( get_option( 'calendar_description_' . $the_term_id ) );
 
 	get_header();
 	?>
@@ -76,9 +77,9 @@ else :
 			wp_reset_postdata();
 			?>
 
-			<?php kcalShortcodes::calendar_pagination( 'nav-below' ); ?>
+			<?php Kcal_Shortcodes::calendar_pagination( 'nav-below' ); ?>
 			</div><!--end col-lg-8-->
-			<?php include_once KCAL_HOST_DIR . 'templates/parts/sidebar-kcal.php'; ?>
+			<?php get_sidebar( 'kcal' ); ?>
 			</div><!--end entry-content/standard content wrapper -->
 
 			<?php else : ?>

@@ -76,8 +76,8 @@ if ( ! empty( $meta['_kcal_location'][0] ) ) :
 endif;
 
 $calendar   = get_term_by( 'slug', get_query_var( 'calendar' ), 'calendar' );
-$cal_colour = get_option( 'calendar_' . $calendar->term_id );
-$cal_text   = get_option( 'calendar_text_' . $calendar->term_id );
+$cal_colour = get_option( 'calendar_' . get_query_var( 'calendar' ) );
+$cal_text   = get_option( 'calendar_text_' . get_query_var( 'calendar' ) );
 
 if ( '#fff' !== $cal_text ) :
 	$cal_text = '#000';

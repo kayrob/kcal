@@ -42,9 +42,9 @@ if ( ! class_exists( 'KCalCalendarSidebar' ) ) {
 
 			$cat_id = get_query_var( 'calendar' );
 			if ( false !== $cat_id && ! empty( $cat_id ) ) {
-				$the_term = get_the_term_by( 'slug', $cat_id, 'calendar' );
+				$the_term = get_term_by( 'slug', $cat_id, 'calendar' );
 			}
-			$allthe_terms = get_the_terms( array( 'calendar' ) );
+			$allthe_terms = get_terms( 'calendar' );
 
 			$nav_output = '';
 
@@ -53,9 +53,11 @@ if ( ! class_exists( 'KCalCalendarSidebar' ) ) {
 				$this->scripts['kcal-widgets-js']  = true;
 				$this->scripts['kcal-widgets-css'] = true;
 
+				$title = ( isset( $instance['title'] ) ? $instance['title'] : __( 'Calendars', 'kcal' ) );
+
 				$nav_output  = '<div class="list-calendars-wrapper">';
 				$nav_output .= $args['before_title'];
-				$nav_output .= ( isset( $instance['title'] ) ? $instance['title'] : __( 'Calendars', 'kcal' ) );
+				$nav_output .= $title;
 				$nav_output .= $args['after_title'];
 				$nav_output .= '<ul>';
 				foreach ( $allthe_terms as $calthe_term ) {
@@ -67,6 +69,8 @@ if ( ! class_exists( 'KCalCalendarSidebar' ) ) {
 				}
 				$nav_output .= '</ul>';
 				$nav_output .= '</div>';
+
+				$nav_output = apply_filters( 'kcal_sidebar_html', $nav_output, 'calendarsidebar', $title );
 			}
 			if ( ! empty( $nav_output ) ) {
 				echo wp_kses( $args['before_widget'], 'post' );
