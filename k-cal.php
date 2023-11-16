@@ -3,7 +3,7 @@
  * Plugin Name: K-Cal
  * Plugin URI: https://github.com/kayrob/kcal/archive/refs/heads/master.zip
  * Description: Full service calendar using fullCalendar as base
- * Version: 3.0.2
+ * Version: 3.0.4
  * Author: Karen Laansoo
  * Author URI: https://karenlaansoo.me
  */
@@ -24,7 +24,7 @@ if ( ! class_exists( 'kCalPlugin' ) ) {
 		 * Class initialization
 		 */
 		public static function init() {
-			define( 'KCAL_HOST_VERSION', '3.0.1' );
+			define( 'KCAL_HOST_VERSION', '3.0.4' );
 			define( 'KCAL_HOST_FILE', __FILE__ );
 			define( 'KCAL_HOST_DIR', plugin_dir_path( __FILE__ ) );
 			define( 'KCAL_HOST_URL', plugins_url( '/', __FILE__ ) );

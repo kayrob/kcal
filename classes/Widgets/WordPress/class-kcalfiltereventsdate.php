@@ -87,7 +87,7 @@ if ( ! class_exists( 'KCalfilterEventsDate' ) ) {
 					$nav_output .= __( 'Filter Events', 'kcal' );
 					$nav_output .= $args['after_title'];
 					$nav_output .= '<ul>';
-					$cat_link    = get_category_link( $the_term );
+					$cat_link    = esc_url( get_category_link( $the_term ) );
 					foreach ( $res as $row ) {
 						$nav_output .= "<li><a href=\"{$cat_link}?fm=" . $row['fm'] . '&fy=' . $row['fy'] . '"><span class="link-text">' . $row['fm'] . ' ' . $row['fy'] . '</span><span class="kcal-chevron-right"></span></a>';
 						$nav_output .= '</li>';

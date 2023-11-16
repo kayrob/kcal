@@ -109,7 +109,7 @@ if ( ! class_exists( 'KCalListView' ) ) {
 							$date = new \DateTime( 'now', $timezone_obj );
 							// Get daylight or standard time for today.
 							$today_dst = $date->format( 'I' );
-							$date->setTimestamp( $nfo['end'] );
+							$date->setTimestamp( $nfo['end'] + $nfo['timezone_offset'] );
 
 							if ( $date->getTimestamp() > current_time( 'timestamp' ) ) { //phpcs:ignore
 								$date->setTimestamp( $nfo['start'] );
@@ -139,28 +139,14 @@ if ( ! class_exists( 'KCalListView' ) ) {
 								$dxn     = substr( $dxn, 0, $dxn_end );
 
 								$time_start = $date->format( $time_format );
-								$date->setTimestamp( $nfo['end'] );
+								$date->setTimestamp( $nfo['end'] + $nfo['timezone_offset'] );
 								$time_end = $date->format( $time_format );
-								// Corrections for Daylight savings/Standard time.
-								if ( (int) $today_dst !== (int) $date->format( 'I' ) ) {
-									if ( 0 === (int) $today_dst ) {
-										// Today is standard time. Set the display back one hour if recur is in DST.
-										$date->setTimestamp( $nfo['start'] - ( 60 * 60 ) );
-										$time_start = $date->format( $time_format );
-										$date->setTimestamp( $nfo['end'] - ( 60 * 60 ) );
-										$time_end = $date->format( $time_format );
-									} else {
-										// Today is in DST. Set the display forward one hour if recur is in Standard.
-										$date->setTimestamp( $nfo['start'] + ( 60 * 60 ) );
-										$time_start = $date->format( $time_format );
-										$date->setTimestamp( $nfo['end'] + ( 60 * 60 ) );
-										$time_end = $date->format( $time_format );
-									}
-								} else {
-									$time_start = $date->format( $time_format );
-									$date->setTimestamp( $nfo['end'] );
-									$time_end = $date->format( $time_format );
-								}
+
+								$date->setTimestamp( $nfo['start'] + $nfo['timezone_offset'] );
+								$time_start = $date->format( $time_format );
+								$date->setTimestamp( $nfo['end'] + $nfo['timezone_offset'] );
+								$time_end = $date->format( $time_format );
+
 								?>
 							<li class="kcal-feed-item<?php echo ( 0 === $e ) ? ' first' : ''; ?>">
 								<h4><a href="<?php echo esc_url( $event_url ); ?>" class="event-main"><?php echo esc_attr( $nfo['title'] ); ?></a></h4>

@@ -151,7 +151,9 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 						$recurrence        = ( isset( $event_meta['_kcal_recurrenceType'][0] ) ) ? $event_meta['_kcal_recurrenceType'][0] : 'None';
 						$event->recurrence = $recurrence;
 						$timezone          = ( isset( $event_meta['_kcal_timezone'] ) ) ? $event_meta['_kcal_timezone'][0] : get_option( 'gmt_offset' );
-						$today             = new \DateTime( 'now', new \DateTimezone( $timezone ) );
+						$today             = new \DateTime();
+						$today->setTimezone( new \DateTimeZone( $timezone ) );
+						$today->setTimestamp( $event->eventStartDate ); //phpcs:ignore
 
 						if ( isset( $event_meta['_kcal_recurrenceEnd'][0] ) && 'Null' !== $event_meta['_kcal_recurrenceEnd'][0] && ! empty( $event_meta['_kcal_recurrenceEnd'][0] ) ) {
 							foreach ( $event_meta['_kcal_recurrenceDate'] as $r_date ) {
@@ -159,18 +161,18 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 								$start_time                 = array_keys( $recur_date );
 								list( $end_time, $meta_id ) = array_values( $recur_date[ $start_time[0] ] );
 
-								$recur_dt = new \DateTime( 'now', new \DateTimezone( $timezone ) );
+								$recur_dt = new \DateTime();
+								$recur_dt->setTimezone( new \DateTimezone( $timezone ) );
 								$recur_dt->setTimestamp( $start_time[0] );
+								$tz_offset = 0;
 
 								if ( (int) $today->format( 'I' ) !== (int) $recur_dt->format( 'I' ) ) {
 									if ( 0 === (int) $today->format( 'I' ) ) {
 										// Today is standard time. Set the display back one hour if recur is in DST.
-										$start_time[0] -= ( 60 * 60 );
-										$end_time      -= ( 60 * 60 );
+										$tz_offset -= 3600;
 									} else {
 										// Today is in DST. Set the display forward one hour if recur is in Standard.
-										$start_time[0] += ( 60 * 60 );
-										$end_time      += ( 60 * 60 );
+										$tz_offset += 3600;
 									}
 								}
 
@@ -178,7 +180,6 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 								foreach ( $event as $key => $value ) {
 									$recur[ $key ] = $value;
 								}
-								$recur_id                     = '';
 								$recur_id                     = $event_id . '-' . $meta_id;
 								$recur['calendarID']          = $event->calendarID; //phpcs:ignore
 								$recur['eventStartDate']      = $event_meta['_kcal_eventStartDate'][0];
@@ -189,6 +190,7 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 								$recur['ID']                  = $recur_id;
 								$recur['metaID']              = $meta_id;
 								$recur['timezone']            = $timezone;
+								$recur['timezone_offset']     = $tz_offset;
 								$res[ $recur_id ]             = json_decode( json_encode( $recur ) ); //phpcs:ignore
 							}
 						}
@@ -340,13 +342,14 @@ if ( ! class_exists( 'CalendarWidgets' ) && class_exists( 'Calendar' ) ) {
 									$link = ( ! empty( $row->detailsAlternateURL ) ) ? trim( $row->detailsAlternateURL ) : get_permalink( $row->ID ); //phpcs:ignore
 
 									$events[ $row->ID ] = array(
-										'id'          => (int) $row->ID,
-										'start'       => $row->eventStartDate, //phpcs:ignore
-										'end'         => $row->eventEndDate, //phpcs:ignore
-										'link'        => $link,
-										'title'       => trim( $row->post_title ),
-										'description' => trim( $row->post_content ),
-										'calendar'    => $row->calendarID, //phpcs:ignore
+										'id'              => (int) $row->ID,
+										'start'           => $row->eventStartDate, //phpcs:ignore
+										'end'             => $row->eventEndDate, //phpcs:ignore
+										'link'            => $link,
+										'title'           => trim( $row->post_title ),
+										'description'     => trim( $row->post_content ),
+										'calendar'        => $row->calendarID, //phpcs:ignore
+										'timezone_offset' => ( isset( $row->timezone_offset ) ) ? $row->timezone_offset : 0
 									);
 									$j++;
 								}

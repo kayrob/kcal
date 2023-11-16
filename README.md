@@ -4,7 +4,7 @@
 - Requires at least: 5.1
 - Tested up to: 6.1.1
 - Requires PHP: 7.2
-- Stable tag: 3.0.2
+- Stable tag: 3.0.3
 
 
 ## Description
@@ -25,6 +25,11 @@ There two companion plugins: Scheduler and course registration
 
 ## Changelog
 
+- v3.0.4 (November 2024)
+	- Fix admin creation of recurring events for timezone and include last date.
+	- Fix full calendar view for timezone shifts.
+- v3.0.3 (April 2023)
+	- Fix admin view of recurring events. Display timestamp based on daylight/standard time
 - v3.0.2 (January 2023)
 	- Fix display for events by timzone and daylight/standard time
 	- Fix locate template and pagination

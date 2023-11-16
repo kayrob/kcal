@@ -315,6 +315,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 		public function kcal_mb_event_repeat( $post ) {
 			$recurrence_type = get_post_meta( $post->ID, '_kcal_recurrenceType', true );
 			$recurrence_end  = get_post_meta( $post->ID, '_kcal_recurrenceEnd', true );
+			$main_start_date = get_post_meta( $post->ID, '_kcal_eventStartDate', true );
 
 			if ( is_null( $recurrence_end ) || 'null' === strtolower( $recurrence_end ) ) {
 				$recurrence_end = '';
@@ -341,14 +342,14 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 
 			if ( ! empty( $recurrence_dates ) ) {
 
-				$timezone  = get_post_meta( $post->ID, '_kcal_timezone', true );
-				$event_dst = get_post_meta( $post->ID, '_kcal_dst', true );
+				$timezone = get_post_meta( $post->ID, '_kcal_timezone', true );
 
 				if ( empty( $timezone ) || false === $timezone ) {
 					$timezone = get_option( 'gmt_offset' );
 				}
 
 				$today = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
+				$today->setTimestamp( $main_start_date );
 
 				echo '<p><strong>' . esc_attr__( 'Recurrence Dates', 'kcal' ) . '</strong></p>';
 				echo '<ol>';
@@ -435,7 +436,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			// Check the user's permissions.
 			$screen_type = ( isset( $_GET['post_type'] ) && 'event' === $_GET['post_type'] ) ? 'event' : '';
 			if ( empty( $screen_type ) && isset( $_GET['post'] ) ) {
-				$screen_type = get_post_type( $_GET['post'] ); //phpcs:ignore
+				$screen_type = get_post_type( (int) $_GET['post'] ); //phpcs:ignore
 			}
 			if ( 'event' === $screen_type ) {
 				if ( ! current_user_can( 'edit_events', $post_id ) ) {
@@ -568,33 +569,40 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 		 * @param string  $recurrence is the event recurring.
 		 * @param integer $interval is the recurrence interval.
 		 * @param string  $recur_end is the recurrence end date.
-		 * @param string  $first_event_start is the first recurrence start date.
-		 * @param string  $first_event_end is the first recurrence end date.
+		 * @param object  $first_event_start is the first recurrence start date object.
+		 * @param string  $first_event_end is the first recurrence end date object.
+		 * @param string  $timezone is the timezone string.
 		 * @return array|void
 		 */
-		protected function create_recurring_yearly_dates( $post_id, $recurrence, $interval, $recur_end, $first_event_start, $first_event_end ) {
+		protected function create_recurring_yearly_dates( $post_id, $recurrence, $interval, $recur_end, $first_event_start, $first_event_end, $timezone ) {
 			$events = array();
 			if ( preg_match( '/^\d{1,6}$/', $post_id, $matches ) ) {
-				$recurrence_end_date    = ( ! empty( $recur_end ) ) ? strtotime( trim( $recur_end ) . ' ' . date( 'g:i a', $first_event_end ) ) : mktime( 0, 0, 0, 12, 31, date( 'Y' ) ); //phpcs:ignore
-				$first_event_start_time = $first_event_start;
-				$first_event_end_time   = $first_event_end;
+				$recur_end_ts           = mktime( (int) $first_event_end->format( 'g' ), (int) $first_event_end->format( 'i' ), 0, (int) $recur_end->format( 'm' ), (int) $recur_end->format( 'd' ), (int) $recur_end->format( 'Y' ) );
+				$recurrence_end_date    = ( ! empty( $recur_end ) ) ? $recur_end_ts : mktime( 0, 0, 0, 12, 31, date( 'Y' ) ); //phpcs:ignore
+				$first_event_start_time = $first_event_start->getTimestamp();
+				$first_event_end_time   = $first_event_end->getTimestamp();
+				$new_dates              = $recur_end;
 
 				if ( $recurrence_end_date > $first_event_end_time ) {
 					$num_years = date( 'Y', $recurrence_end_date ) - date( 'Y',$first_event_end_time ); //phpcs:ignore
 					if ( 0 < $num_years ) {
-						$day_of_week_event_start = date( 'w', $first_event_start_time ); //phpcs:ignore
-						$date_diff_start         = floor( date( 'j', $first_event_start_time ) - 1 ); //phpcs:ignore
+						$day_of_week_event_start = $first_event_start->format('w'); //phpcs:ignore
+						$date_diff_start         = floor( (int) $first_event_start->format('d') - 1 ); //phpcs:ignore
 						$week_num_start          = ceil( $date_diff_start / 7 );
 						for ( $y = 1; $y <= $num_years; $y++ ) {
-							$next_year_start_time = mktime( 0, 0, 0, date( 'm', $first_event_start_time ), 1, date( 'Y', $first_event_start_time ) + ( $y * $interval ) ); //phpcs:ignore
+							$next_year_start_time = mktime( (int) $first_event_start->format('G'), (int) $first_event_start->format('i'), 0, (int) $first_event_start->format('m'), 1, (int) $first_event_start->format('Y') + ( $y * $interval ) ); //phpcs:ignore
 							$new_day_of_week      = 1;
 							if ( date( 'w', $next_year_start_time ) > $day_of_week_event_start ) { //phpcs:ignore
 								$new_day_of_week_start = 1 + ( ( 7 + $day_of_week_event_start ) - date( 'w', $next_year_start_time ) ); //phpcs:ignore
 							} else if ( date( 'w', $next_year_start_time ) < $day_of_week_event_start ) { //phpcs:ignore
 								$new_day_of_week_start = ( 1 + ( $day_of_week_event_start - date( 'w', $next_year_start_time ) ) ); //phpcs:ignore
 							}
-							$new_day_of_week_start              += ( $week_num_start * 7 - 7 );
-							$events[ -1 + $y ]['eventStartDate'] = mktime( 0, 0, 0, date( 'm', $next_year_start_time ), $new_day_of_week_start,date( 'Y', $next_year_start_time ) ); //phpcs:ignore
+							$new_day_of_week_start += ( $week_num_start * 7 - 7 );
+							$new_start_ts           = mktime( (int) $first_event_start->format( 'G' ), (int) $first_event_start->format( 'i' ), 0, date( 'm', $next_year_start_time ), $new_day_of_week_start, date( 'Y', $next_year_start_time ) ); //phpcs:ignore
+							$new_dates->setTimestamp( $new_start_ts );
+							$year_diff = $new_dates->getTimestamp() - $first_event_start->getTimestamp();
+							// - $first_event_start->getOffset() is the timezone adjustment.
+							$events[ -1 + $y ]['eventStartDate'] = $first_event_start->getTimestamp() + $year_diff - $first_event_start->getOffset(); //phpcs:ignore
 							$events[ -1 + $y ]['eventEndDate']   = $events[ -1 + $y ]['eventStartDate'] + ( $first_event_end_time - $first_event_start_time );
 						}
 					}
@@ -620,12 +628,11 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			$events = array();
 
 			if ( preg_match( '/^[0-9]{1,6}$/', $post_id, $matches ) ) {
-				$new_dates  = new \DateTime( 'now', new DateTimeZone( $timezone ) );
+				$new_dates = $recur_end;
+				( ! empty( $recur_end ) ) ? $new_dates->setTime( (int) $first_event_start->format( 'G' ), (int) $first_event_start->format( 'i' ) ) : $new_dates->setTimestamp( mktime( 0, 0, 0, 12, 31, date( 'Y' ) ) ); //phpcs:ignore
 
-				( ! empty( $recur_end ) ) ? $new_dates->setTimestamp( strtotime( $recur_end->format( 'Y-m-d' ) . ' ' . $first_event_start->format( 'g:i a' ) ) ) : $new_dates->setTimestamp( mktime( 0, 0, 0, 12, 31, date( 'Y' ) ) ); //phpcs:ignore
-
-				$first_event_start_time = $first_event_start;
-				$first_event_end_time   = $first_event_end;
+				$first_event_start_time = $first_event_start->getTimestamp();
+				$first_event_end_time   = $first_event_end->getTimestamp();
 
 				$recurrence_end_date = $new_dates->getTimestamp();
 
@@ -633,12 +640,12 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$num_months       = ceil( ( $recurrence_end_date - $first_event_end_time ) / ( 60 * 60 * 24 * 7 * 4 ) );
 					$num_recur_events = $num_months / $interval;
 					if ( 0 < $num_recur_events ) {
-						$day_of_week_event_start = date( 'w', $first_event_start_time ); //phpcs:ignore
-						$date_diff_start         = floor( date( 'j', $first_event_start_time ) - 1 ); //phpcs:ignore
+						$day_of_week_event_start = $first_event_start->format('w'); //phpcs:ignore
+						$date_diff_start         = floor( (int) $first_event_start->format('j') - 1 ); //phpcs:ignore
 						$week_num_start          = ceil( $date_diff_start / 7 ); //phpcs:ignore
 						for ( $m = 1; $m <= $num_recur_events; $m++ ) {
-							$next_month_start      = date( 'n', $first_event_start_time ) + ( $interval * $m ); //phpcs:ignore
-							$next_month_start_time = ( $next_month_start > 12 ) ? mktime( 0, 0, 0, ( $next_month_start - 12 ), 1, date( 'Y', $first_event_start_time ) + 1 ) : mktime( 0, 0, 0, $next_month_start, 1, date( 'Y', $first_event_start_time ) ); //phpcs:ignore
+							$next_month_start      = (int) $first_event_start->format('n') + ( $interval * $m ); //phpcs:ignore
+							$next_month_start_time = ( $next_month_start > 12 ) ? mktime( 0, 0, 0, ( $next_month_start - 12 ), 1, (int) $first_event_start->format('Y') + 1 ) : mktime( 0, 0, 0, $next_month_start, 1, (int) $first_event_start->format('Y') ); //phpcs:ignore
 							$new_day_of_week_start = 1;
 							if ( date( 'w', $next_month_start_time ) > $day_of_week_event_start ) { //phpcs:ignore
 								$new_day_of_week_start = 1 + ( ( 7 + $day_of_week_event_start ) - date( 'w', $next_month_start_time ) ); //phpcs:ignore
@@ -646,11 +653,15 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 								$new_day_of_week_start = ( 1 + ( $day_of_week_event_start - date( 'w', $next_month_start_time ) ) ); //phpcs:ignore
 							}
 							$new_day_of_week_start += ( $week_num_start * 7 - 7 );
-							$recur_timestamp        = mktime( 0, 0, 0, date( 'm', $next_month_start_time ), $new_day_of_week_start, date( 'Y', $next_month_start_time ) ); //phpcs:ignore
+
+							$recur_timestamp        = mktime( (int) $first_event_start->format( 'G' ), (int) $first_event_start->format( 'i' ), 0,  date( 'm', $next_month_start_time ), $new_day_of_week_start, date( 'Y', $next_month_start_time ) ); //phpcs:ignore
 							$new_dates->setTimestamp( $recur_timestamp );
 
-							$events[ -1 + $m ]['eventStartDate'] = '';
-							$events[ -1 + $m ]['eventEndDate']   = $events[ -1 + $m ]['eventStartDate'] + ( $first_event_end_time - $first_event_start_time ); //phpcs:ignore
+							if ( $new_dates->getTimestamp() < $recurrence_end_date ) {
+								// - $first_event_start->getOffset() is the timeset difference since this seems to subtract twice on display.
+								$events[ -1 + $m ]['eventStartDate'] = $new_dates->getTimestamp() - $first_event_start->getOffset();
+								$events[ -1 + $m ]['eventEndDate']   = (int) $events[ -1 + $m ]['eventStartDate'] + ( $first_event_end_time - $first_event_start_time ); //phpcs:ignore
+							}
 						}
 					}
 				}
@@ -665,7 +676,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 		 * @param integer $post_id is the event ID.
 		 * @param string  $recurrence is the event recurring.
 		 * @param integer $interval is the recurrence interval.
-		 * @param string  $recur_end is the recurrence end date.
+		 * @param object  $recur_end is the recurrence end date object.
 		 * @param string  $first_event_start is the first recurrence start date.
 		 * @param string  $first_event_end is the first recurrence end date.
 		 * @param string  $timezone is the event timezone.
@@ -675,9 +686,8 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			$events = array();
 
 			if ( preg_match( '/^[0-9]{1,6}$/', $post_id, $matches ) ) {
-				$new_dates = new \DateTime( 'now', new DateTimeZone( $timezone ) );
-				// $recurrence_end_date = (!empty($recur_end)) ? strtotime(trim($recur_end)." ".date( 'g:i a',$first_event_end)) : mktime(0,0,0,12,31,date( 'Y"));
-				( ! empty( $recur_end ) ) ? $new_dates->setTimestamp( strtotime( $recur_end->format( 'Y-m-d' ) . ' ' . $first_event_start->format( 'g:i a' ) ) ) : $new_dates->setTimestamp( mktime( 0, 0, 0, 12, 31, date( 'Y' ) ) ); //phpcs:ignore
+				$new_dates = $recur_end;
+				( ! empty( $recur_end ) ) ? $new_dates->setTime( (int) $first_event_start->format( 'G' ), (int) $first_event_start->format( 'i' ) ) : $new_dates->setTimestamp( mktime( 0, 0, 0, 12, 31, date( 'Y' ) ) ); //phpcs:ignore
 				$first_event_start_time = $first_event_start->getTimestamp();
 				$first_event_end_time   = $first_event_end->getTimestamp();
 
@@ -694,7 +704,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$next_instance_end   = $first_event_end_time + $interval_factor;
 
 					$j = 1;
-					while ( $next_instance_end <= $recurrence_end_date ) {
+					while ( $next_instance_start <= $recurrence_end_date ) {
 						$events[ -1 + $j ]['eventStartDate'] = $next_instance_start;
 						$events[ -1 + $j ]['eventEndDate']   = $next_instance_end;
 						$j++;
@@ -880,6 +890,7 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 					$post['_kcal_eventEndTime']   = $post['_kcal_recurEndTime'];
 					$post['_kcal_eventStartDate'] = $post['_kcal_recur_eventStartDate'];
 					$post['_kcal_eventEndDate']   = $post['_kcal_recur_eventEndDate'];
+					$post['_kcal_timezone']       = get_post_meta( $post['eventID'], '_kcal_timezone', true );
 
 					if ( ! isset( $post['recurEdit'] ) || 'this' === trim( $post['recurEdit'] ) ) {
 
@@ -912,12 +923,22 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 						if ( $this->verify_edit_add_event_data( $post ) ) {
 							$recurring_events = get_post_meta( $post['eventID'], '_kcal_recurrenceDate' );
 							$updated          = 0;
+							try {
+								$timezone = $post['_kcal_timezone'];
+							} catch ( \Exception $e ) {
+								$timezone = get_option( 'gmt_offset' );
+							}
+							$date_time = new \DateTime( 'now', new DateTimeZone( $timezone ) );
 							foreach ( $recurring_events as $r_data ) {
-								$old_meta                              = $r_data;
-								$start_time                            = array_keys( $r_data );
-								$post['_kcal_eventStartDate']          = date( 'Y-m-d', $start_time[0] ); //phpcs:ignore
-								list( $end_time, $meta_id )            = array_values( $r_data[ $start_time[0] ] );
-								$post['_kcal_eventEndDate']            = date( 'Y-m-d', $end_time ); //phpcs:ignore
+								// Start timestamp.
+								$date_time->setTimestamp( $start_time[0] );
+								$old_meta                     = $r_data;
+								$start_time                   = array_keys( $r_data );
+								$post['_kcal_eventStartDate'] = $date_time->format( 'Y-m-d' ); //phpcs:ignore
+								list( $end_time, $meta_id )   = array_values( $r_data[ $start_time[0] ] );
+								// End timestamp.
+								$date_time->setTimestamp( $end_time );
+								$post['_kcal_eventEndDate']            = $date_time->format( 'Y-m-d' ); //phpcs:ignore
 								list( $new_start_time, $new_end_time ) = $this->format_add_edit_dateTime( $post );
 								$new_meta                              = array(
 									$new_start_time => array(

@@ -101,7 +101,7 @@ if ( ! class_exists( 'Calendar' ) ) {
 		 */
 		public function get_calendars_view( $id = false, $rss = true, $ics = true ) {
 			$res               = $this->get_calendars_common();
-			$page_action       = get_permalink( get_the_ID() );
+			$page_action       = get_permalink( (int) get_the_ID() );
 			$background_colour = $row->eventBackgroundColor; //phpcs:ignore
 			$calendar_name     = $row->calendarName; //phpcs:ignore
 			if ( false !== $res ) {
@@ -282,13 +282,13 @@ if ( ! class_exists( 'Calendar' ) ) {
 		public function set_event_data( $res, $cal_id, $recurring = false ) {
 			$events = array();
 			if ( false !== $res ) {
+
 				foreach ( $res as $row ) {
 					$item_id = explode( '-', $row->ID );
 
 					$meta = get_post_meta( $item_id[0] );
 
 					$timezone = ( isset( $meta['_kcal_timezone'][0] ) ) ? $meta['_kcal_timezone'][0] : get_option( 'gmt_offset' );
-
 					$location = trim( $meta['_kcal_location'][0] );
 
 					foreach ( $meta as $key => $data ) {
@@ -319,12 +319,13 @@ if ( ! class_exists( 'Calendar' ) ) {
 						$timezone_obj = new \DateTimeZone( get_option( 'gmt_offset' ) );
 					}
 
-					$date_s = new DateTime( '', $timezone_obj );
-					$date_e = new DateTime( '', $timezone_obj );
+					$date_s      = new DateTime( '', $timezone_obj );
+					$date_e      = new DateTime( '', $timezone_obj );
+					$time_offset = 0;
 
 					if ( true === $recurring ) {
-						$date_s->setTimestamp( $row->eventStartDate ); //phpcs:ignore
-						$date_e->setTimestamp( $row->eventEndDate ); //phpcs:ignore
+						$date_s->setTimestamp( $row->eventStartDate + $row->timezone_offset ); //phpcs:ignore
+						$date_e->setTimestamp( $row->eventEndDate + $row->timezone_offset ); //phpcs:ignore
 					} else {
 						$date_s->setTimestamp( $meta['_kcal_eventStartDate'][0] );
 						if ( $meta['_kcal_eventEndDate'][0] <= $meta['_kcal_eventStartDate'][0] ) {
