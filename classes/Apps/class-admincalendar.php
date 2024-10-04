@@ -475,7 +475,6 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			delete_post_meta( $post_id, 'calendar_save_notice' );
 			if ( empty( $_POST['tax_input']['calendar'][1]) ) {
 
-				//$_POST["post_status"] = "draft";
 				// Post specific
 				add_post_meta( $post_id, 'calendar_save_notice', 1 );
 			}
@@ -1291,6 +1290,9 @@ if ( ! class_exists( 'AdminCalendar' ) && class_exists( 'Calendar' ) ) {
 			return $uploaded;
 		}
 
+		/**
+		 * Show and admin notice if a post has a calendar not set error
+		 */
 		public function general_admin_notice() {
 			if ( isset($_GET['post'] ) && 'event' == get_post_type( $_GET['post'] ) ) {
 				$is_not_valid = get_post_meta( $_GET['post'], 'calendar_save_notice', true );
